@@ -6,11 +6,11 @@
   <title>WTH ❤️ MZY - 甜蜜情侣小屋</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome 图标库 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts -->
+  <!-- Google Fonts 字体库 -->
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- Supabase JS SDK (支持云端多端同步) -->
+  <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -64,14 +64,6 @@
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(254, 205, 219, 0.8);
       border-radius: 20px;
-    }
-
-    .claude-card {
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .claude-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 24px -6px rgba(244, 63, 122, 0.18);
     }
 
     .polaroid-card {
@@ -137,6 +129,7 @@
 
   <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
+  <!-- 全屏相片 Lightbox 查看器 -->
   <div id="lightbox-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-[90] p-4 transition-opacity duration-300">
     <div class="relative max-w-4xl w-full flex flex-col items-center">
       <button onclick="closeLightbox()" class="absolute -top-12 right-0 text-white/80 hover:text-white text-2xl p-2 transition">
@@ -147,6 +140,7 @@
     </div>
   </div>
 
+  <!-- 云端配置 Modal -->
   <div id="config-modal" class="fixed inset-0 bg-black/50 backdrop-blur-md hidden items-center justify-center z-[95] p-4">
     <div class="claude-glass p-6 w-full max-w-lg bg-white/95 shadow-kitty-lg">
       <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
@@ -156,7 +150,7 @@
         <button onclick="closeConfigModal()" class="text-kitty-300 hover:text-kitty-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <p class="text-xs text-kitty-500 mb-4 leading-relaxed">
-        已自动为你预装云端数据库参数！如有需要亦可自行修改。
+        填入你的 Supabase URL 和 Key 后，手机上传的照片和记录就能在电脑上自动同步啦！
       </p>
       <form onsubmit="saveSupabaseConfig(event)" class="space-y-4">
         <div>
@@ -172,13 +166,14 @@
         <div class="flex justify-between items-center pt-2">
           <span id="sync-status-badge" class="text-xs font-bold text-gray-400">状态：未关联云端</span>
           <button type="submit" class="px-5 py-2.5 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition">
-            保存并重新同步
+            保存并开始同步
           </button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- 登录拦截弹窗 (已去掉账号密码额外提示) -->
   <div id="login-modal" class="fixed inset-0 bg-kitty-100/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
     <div class="claude-glass p-8 w-full max-w-md text-center shadow-kitty-lg relative overflow-hidden transition-all transform duration-300">
       <div class="relative w-24 h-24 mx-auto mb-5 bg-gradient-to-tr from-kitty-200 to-kitty-100 rounded-full flex items-center justify-center border-4 border-white shadow-kitty-sm">
@@ -294,6 +289,7 @@
           </div>
         </header>
 
+        <!-- 爱意计数盘模块 -->
         <div id="tab-dashboard" class="tab-content active space-y-6">
           <div class="claude-glass p-6 md:p-8 text-center relative overflow-hidden shadow-kitty-sm">
             <div class="absolute -right-6 -bottom-6 text-9xl opacity-10 pointer-events-none select-none">🐱</div>
@@ -355,6 +351,7 @@
           </div>
         </div>
 
+        <!-- 拍立得照片墙模块 -->
         <div id="tab-photos" class="tab-content space-y-6">
           <div class="flex justify-between items-center">
             <p class="text-xs text-kitty-400 font-medium">像拍立得一样记录我们的时刻（点击可全屏查看）</p>
@@ -366,6 +363,7 @@
           <div id="photo-wall" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-pink-200/30 border-2 border-dashed border-kitty-300/60 min-h-[300px]"></div>
         </div>
 
+        <!-- 甜蜜生活小记模块 -->
         <div id="tab-notes" class="tab-content space-y-6">
           <div class="flex justify-between items-center">
             <p class="text-xs text-kitty-400 font-medium">书写我们点点滴滴的回忆</p>
@@ -376,6 +374,7 @@
           <div id="notes-list" class="space-y-4"></div>
         </div>
 
+        <!-- 情侣 100 件小事模块 -->
         <div id="tab-bucketlist" class="tab-content space-y-6">
           <div class="claude-glass p-5 shadow-kitty-sm flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="w-full md:w-auto">
@@ -411,6 +410,7 @@
     </main>
   </div>
 
+  <!-- 照片上传 Modal -->
   <div id="photo-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
       <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
@@ -442,6 +442,7 @@
     </div>
   </div>
 
+  <!-- 日记 Modal -->
   <div id="note-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
       <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
@@ -466,6 +467,7 @@
     </div>
   </div>
 
+  <!-- 愿望 Modal -->
   <div id="bucket-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
       <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
@@ -486,18 +488,15 @@
   </div>
 
   <script>
-    // 默认基础数据与硬编码内置 Supabase 云凭证
+    // 默认基础数据
     const DEFAULT_START_DATE = "2023-05-20";
-    const DEFAULT_SUPABASE_URL = "https://dyotiyqvqwfgaxdrktwt.supabase.co";
-    const DEFAULT_SUPABASE_KEY = "sb_publishable_bNPfidm7HohmbXOy59z8vg_issqfro1";
-
     let tempImageBase64 = "";
     let currentBucketFilter = "all";
 
-    // Supabase 变量（优先读取 LocalStorage，无则读取硬编码凭证）
+    // Supabase 预填凭证 (你的专有云数据库)
     let supabaseClient = null;
-    let supabaseUrl = localStorage.getItem('kitty_sp_url') || DEFAULT_SUPABASE_URL;
-    let supabaseKey = localStorage.getItem('kitty_sp_key') || DEFAULT_SUPABASE_KEY;
+    let supabaseUrl = localStorage.getItem('kitty_sp_url') || "https://dyotiyqvqwfgaxdrktwt.supabase.co";
+    let supabaseKey = localStorage.getItem('kitty_sp_key') || "sb_publishable_bNPfidm7HohmbXOy59z8vg_issqfro1";
 
     const defaultPhotos = [
       {
@@ -525,107 +524,108 @@
       }
     ];
 
+    // 完整 100 件情侣打卡小事数据清单
     const defaultBucketList = [
-      { id: 'b1', title: '1. 一起过生日 🎂', done: false },
-      { id: 'b2', title: '2. 一起去旅行 🧳', done: false },
-      { id: 'b3', title: '3. 一起过情人节 👩‍❤️‍👨', done: false },
-      { id: 'b4', title: '4. 一起吃海底捞 🍲', done: false },
-      { id: 'b5', title: '5. 一起吊娃娃 🧸', done: false },
-      { id: 'b6', title: '6. 一起去海边 🐟', done: false },
-      { id: 'b7', title: '7. 一起回家乡 🚛', done: false },
-      { id: 'b8', title: '8. 一起看电影 🎬', done: false },
-      { id: 'b9', title: '9. 一起大扫除 🧹', done: false },
-      { id: 'b10', title: '10. 一起穿情侣装 👕', done: false },
-      { id: 'b11', title: '11. 一起吃火锅 🍲', done: false },
-      { id: 'b12', title: '12. 一起吃烤肉 🥓', done: false },
-      { id: 'b13', title: '13. 一起吃烤鱼 🐟', done: false },
-      { id: 'b14', title: '14. 一起吃宵夜 🥡', done: false },
-      { id: 'b15', title: '15. 一起打羽毛球 🏸', done: false },
-      { id: 'b16', title: '16. 一起逛菜市场 🥬', done: false },
-      { id: 'b17', title: '17. 一起做饭 🍳', done: false },
-      { id: 'b18', title: '18. 一起跑步 🏃‍♂️', done: false },
-      { id: 'b19', title: '19. 一起搬家 🏫', done: false },
-      { id: 'b20', title: '20. 一起去游乐园 🎠', done: false },
-      { id: 'b21', title: '21. 一起制作专属相册 📖', done: false },
-      { id: 'b22', title: '22. 一起用情侣手机壳 📱', done: false },
-      { id: 'b23', title: '23. 一起用勺子吃西瓜 🍉', done: false },
-      { id: 'b24', title: '24. 一起发朋友圈合照 📸', done: false },
-      { id: 'b25', title: '25. 一起海边看日落 🌅', done: false },
-      { id: 'b26', title: '26. 一起拍日常vlog 📹', done: false },
-      { id: 'b27', title: '27. 一起庆祝纪念日 💰', done: false },
-      { id: 'b28', title: '28. 一起晚饭后散步 🚶‍♂️', done: false },
-      { id: 'b29', title: '29. 一起跟朋友吃饭 🧑‍🤝‍🧑', done: false },
-      { id: 'b30', title: '30. 一起换情侣头像 🖼️', done: false },
-      { id: 'b31', title: '31. 一起玩五子棋 🖐️', done: false },
-      { id: 'b32', title: '32. 一起骑电动车 🛵', done: false },
-      { id: 'b33', title: '33. 一起去小吃街 🍢', done: false },
-      { id: 'b34', title: '34. 一起自驾游 🚗', done: false },
-      { id: 'b35', title: '35. 一起打电动 🕹️', done: false },
-      { id: 'b36', title: '36. 一起玩游戏 🎮', done: false },
-      { id: 'b37', title: '37. 一起看球赛 ⚽', done: false },
-      { id: 'b38', title: '38. 一起剪头发 ✂️', done: false },
-      { id: 'b39', title: '39. 一起刮彩票 🎟️', done: false },
-      { id: 'b40', title: '40. 一起逛超市 🛒', done: false },
-      { id: 'b41', title: '41. 一起买家具 🪑', done: false },
-      { id: 'b42', title: '42. 一起打扑克 ♠️', done: false },
-      { id: 'b43', title: '43. 一起跨年 🧧', done: false },
-      { id: 'b44', title: '44. 一起健身 💪', done: false },
-      { id: 'b45', title: '45. 一起划船 🚣‍♀️', done: false },
-      { id: 'b46', title: '46. 一起赏花 🌸', done: false },
-      { id: 'b47', title: '47. 一起熬夜 🥱', done: false },
-      { id: 'b48', title: '48. 一起种植物 🌳', done: false },
-      { id: 'b49', title: '49. 介绍给彼此的朋友 🧑‍🤝‍🧑', done: false },
-      { id: 'b50', title: '50. 给对方准备礼物 🎁', done: false },
-      { id: 'b51', title: '51. 难过时的陪伴 🥺', done: false },
-      { id: 'b52', title: '52. 给我吹头发 💇‍♂️', done: false },
-      { id: 'b53', title: '53. 给我穿鞋 👟', done: false },
-      { id: 'b54', title: '54. 照顾对方 🫠', done: false },
-      { id: 'b55', title: '55. 陪我做美甲 💅', done: false },
-      { id: 'b56', title: '56. 接我下班 🚘', done: false },
-      { id: 'b57', title: '57. 拥有车子 🚗', done: false },
-      { id: 'b58', title: '58. 给我送花 🌹', done: false },
-      { id: 'b59', title: '59. 吵架 🌧️', done: false },
-      { id: 'b60', title: '60. 一起参加别人的婚礼 💒', done: false },
-      { id: 'b61', title: '61. 一起去听一场演唱会 🎶', done: false },
-      { id: 'b62', title: '62. 一起去农场摘水果 🥭', done: false },
-      { id: 'b63', title: '63. 一起逛盒马鲜生 🦛', done: false },
-      { id: 'b64', title: '64. 一起逛花鸟市场 🛸', done: false },
-      { id: 'b65', title: '65. 一起拍情侣写真 👩‍❤️‍💋‍👨', done: false },
-      { id: 'b66', title: '66. 一起去南山祈福 🧧', done: false },
-      { id: 'b67', title: '67. 一起去水上乐园 🔫', done: false },
-      { id: 'b68', title: '68. 一起海边看日出 🌅', done: false },
-      { id: 'b69', title: '69. 一起坐绿皮火车 🚃', done: false },
-      { id: 'b70', title: '70. 一起去天涯海角 🏝️', done: false },
-      { id: 'b71', title: '71. 一起去迪士尼 👑', done: false },
-      { id: 'b72', title: '72. 一起放孔明灯 🙏', done: false },
-      { id: 'b73', title: '73. 一起户外烧烤 🍢', done: false },
-      { id: 'b74', title: '74. 一起郊游踏青 🏝️', done: false },
-      { id: 'b75', title: '75. 一起坐直升机 🚁', done: false },
-      { id: 'b76', title: '76. 一起去植物园 🌳', done: false },
-      { id: 'b77', title: '77. 一起去动物园 🐒', done: false },
-      { id: 'b78', title: '78. 一起坐飞机 ✈️', done: false },
-      { id: 'b79', title: '79. 一起住民宿 🏨', done: false },
-      { id: 'b80', title: '80. 一起去体检 🏥', done: false },
-      { id: 'b81', title: '81. 一起看烟花 🎆', done: false },
-      { id: 'b82', title: '82. 一起打雪仗 ❄️', done: false },
-      { id: 'b83', title: '83. 一起敷面膜 🥰', done: false },
-      { id: 'b84', title: '84. 一起坐缆车 🚠', done: false },
-      { id: 'b85', title: '85. 一起去K歌 🎤', done: false },
-      { id: 'b86', title: '86. 一起钓鱼 🎣', done: false },
-      { id: 'b87', title: '87. 一起潜水 🤿', done: false },
-      { id: 'b88', title: '88. 一起冲浪 🏄‍♀️', done: false },
-      { id: 'b89', title: '89. 一起露营 ⛺', done: false },
-      { id: 'b90', title: '90. 一起爬山 🧗‍♀️', done: false },
-      { id: 'b91', title: '91. 一起漂流 🏞️', done: false },
-      { id: 'b92', title: '92. 一起喝酒 🍷', done: false },
-      { id: 'b93', title: '93. 一起泡脚 🦶', done: false },
-      { id: 'b94', title: '94. 一起见对方父母 🧑‍🦳', done: false },
-      { id: 'b95', title: '95. 一起出国旅游 ✈️', done: false },
-      { id: 'b96', title: '96. 一起领结婚证 👩‍❤️‍💋‍👨', done: false },
-      { id: 'b97', title: '97. 一起买房子 🏠', done: false },
-      { id: 'b98', title: '98. 一起结婚 👰‍♀️', done: false },
-      { id: 'b99', title: '99. 一起生娃 👶', done: false },
-      { id: 'b100', title: '100. 一起白头偕老 👵🏻👴🏻', done: false }
+      { id: 'b1', title: '1. 一起过生日🎂', done: false },
+      { id: 'b2', title: '2. 一起去旅行🧳', done: false },
+      { id: 'b3', title: '3. 一起过情人节👩‍❤️‍👨', done: false },
+      { id: 'b4', title: '4. 一起吃海底捞🍲', done: false },
+      { id: 'b5', title: '5. 一起吊娃娃🧸', done: false },
+      { id: 'b6', title: '6. 一起去海边🐟', done: false },
+      { id: 'b7', title: '7. 一起回家乡🛻', done: false },
+      { id: 'b8', title: '8. 一起看电影🎬', done: false },
+      { id: 'b9', title: '9. 一起大扫除🧹', done: false },
+      { id: 'b10', title: '10. 一起穿情侣装👕', done: false },
+      { id: 'b11', title: '11. 一起吃火锅🍲', done: false },
+      { id: 'b12', title: '12. 一起吃烤肉🥓', done: false },
+      { id: 'b13', title: '13. 一起吃烤鱼🐟', done: false },
+      { id: 'b14', title: '14. 一起吃宵夜🥣', done: false },
+      { id: 'b15', title: '15. 一起打羽毛球🏸', done: false },
+      { id: 'b16', title: '16. 一起逛菜市场🥦', done: false },
+      { id: 'b17', title: '17. 一起做饭🍳', done: false },
+      { id: 'b18', title: '18. 一起跑步🏃‍♂️', done: false },
+      { id: 'b19', title: '19. 一起搬家🏫', done: false },
+      { id: 'b20', title: '20. 一起去游乐园🎠', done: false },
+      { id: 'b21', title: '21. 一起制作专属相册📔', done: false },
+      { id: 'b22', title: '22. 一起用情侣手机壳📱', done: false },
+      { id: 'b23', title: '23. 一起用勺子吃西瓜🍉', done: false },
+      { id: 'b24', title: '24. 一起发朋友圈合照📷', done: false },
+      { id: 'b25', title: '25. 一起海边看日落🌅', done: false },
+      { id: 'b26', title: '26. 一起拍日常vlog📹', done: false },
+      { id: 'b27', title: '27. 一起庆祝纪念日💰', done: false },
+      { id: 'b28', title: '28. 一起晚饭后散步🚶‍♀️', done: false },
+      { id: 'b29', title: '29. 一起跟朋友吃饭🧑‍🤝‍🧑', done: false },
+      { id: 'b30', title: '30. 一起换情侣头像👩‍❤️‍👨', done: false },
+      { id: 'b31', title: '31. 一起玩五子棋🖐️', done: false },
+      { id: 'b32', title: '32. 一起骑电动车🛵', done: false },
+      { id: 'b33', title: '33. 一起去小吃街🍢', done: false },
+      { id: 'b34', title: '34. 一起自驾游🚗', done: false },
+      { id: 'b35', title: '35. 一起打电动🎮', done: false },
+      { id: 'b36', title: '36. 一起玩游戏🎮', done: false },
+      { id: 'b37', title: '37. 一起看球赛⚽', done: false },
+      { id: 'b38', title: '38. 一起剪头发✂️', done: false },
+      { id: 'b39', title: '39. 一起刮彩票🎟️', done: false },
+      { id: 'b40', title: '40. 一起逛超市🛒', done: false },
+      { id: 'b41', title: '41. 一起买家具🪑', done: false },
+      { id: 'b42', title: '42. 一起打扑克♠️', done: false },
+      { id: 'b43', title: '43. 一起跨年🧨', done: false },
+      { id: 'b44', title: '44. 一起健身💪', done: false },
+      { id: 'b45', title: '45. 一起划船🚣‍♀️', done: false },
+      { id: 'b46', title: '46. 一起赏花🌸', done: false },
+      { id: 'b47', title: '47. 一起熬夜🥱', done: false },
+      { id: 'b48', title: '48. 一起种植物🪴', done: false },
+      { id: 'b49', title: '49. 介绍给彼此的朋友🧑‍🤝‍🧑', done: false },
+      { id: 'b50', title: '50. 给对方准备礼物🎁', done: false },
+      { id: 'b51', title: '51. 难过时的陪伴🥺', done: false },
+      { id: 'b52', title: '52. 给我吹头发💇‍♂️', done: false },
+      { id: 'b53', title: '53. 给我穿鞋👟', done: false },
+      { id: 'b54', title: '54. 照顾对方😌', done: false },
+      { id: 'b55', title: '55. 陪我做美甲💅', done: false },
+      { id: 'b56', title: '56. 接我下班🚘', done: false },
+      { id: 'b57', title: '57. 拥有车子🚗', done: false },
+      { id: 'b58', title: '58. 给送花🌹', done: false },
+      { id: 'b59', title: '59. 吵架🤫', done: false },
+      { id: 'b60', title: '60. 一起参加别人的婚礼💒', done: false },
+      { id: 'b61', title: '61. 一起去听一场演唱会🎶', done: false },
+      { id: 'b62', title: '62. 一起去农场摘水果🥭', done: false },
+      { id: 'b63', title: '63. 一起逛盒马鲜生🦛', done: false },
+      { id: 'b64', title: '64. 一起逛花鸟市场🐚', done: false },
+      { id: 'b65', title: '65. 一起拍情侣写真👩‍❤️‍👨', done: false },
+      { id: 'b66', title: '66. 一起去南山祈福🇨🇳', done: false },
+      { id: 'b67', title: '67. 一起去水上乐园🔫', done: false },
+      { id: 'b68', title: '68. 一起海边看日出🌅', done: false },
+      { id: 'b69', title: '69. 一起坐绿皮火车🚃', done: false },
+      { id: 'b70', title: '70. 一起去天涯海角🏝️', done: false },
+      { id: 'b71', title: '71. 一起去迪士尼👑', done: false },
+      { id: 'b72', title: '72. 一起放孔明灯🙏', done: false },
+      { id: 'b73', title: '73. 一起户外烧烤🍢', done: false },
+      { id: 'b74', title: '74. 一起郊游踏青🏊‍♂️', done: false },
+      { id: 'b75', title: '75. 一起坐直升机🚁', done: false },
+      { id: 'b76', title: '76. 一起去植物园🌳', done: false },
+      { id: 'b77', title: '77. 一起去动物园🐒', done: false },
+      { id: 'b78', title: '78. 一起坐飞机✈️', done: false },
+      { id: 'b79', title: '79. 一起住民宿🏨', done: false },
+      { id: 'b80', title: '80. 一起去体检🏥', done: false },
+      { id: 'b81', title: '81. 一起看烟花🎆', done: false },
+      { id: 'b82', title: '82. 一起打雪仗❄️', done: false },
+      { id: 'b83', title: '83. 一起敷面膜🥰', done: false },
+      { id: 'b84', title: '84. 一起坐缆车🚠', done: false },
+      { id: 'b85', title: '85. 一起去K歌🎤', done: false },
+      { id: 'b86', title: '86. 一起钓鱼🎣', done: false },
+      { id: 'b87', title: '87. 一起潜水🥽', done: false },
+      { id: 'b88', title: '88. 一起冲浪🏄‍♀️', done: false },
+      { id: 'b89', title: '89. 一起露营⛺', done: false },
+      { id: 'b90', title: '90. 一起爬山🧗‍♀️', done: false },
+      { id: 'b91', title: '91. 一起漂流🗺️', done: false },
+      { id: 'b92', title: '92. 一起喝酒🥂', done: false },
+      { id: 'b93', title: '93. 一起泡脚🦶', done: false },
+      { id: 'b94', title: '94. 一起见对方父母👨‍👩‍👧‍👦', done: false },
+      { id: 'b95', title: '95. 一起出国旅游✈️', done: false },
+      { id: 'b96', title: '96. 一起领结婚证👩‍❤️‍👨', done: false },
+      { id: 'b97', title: '97. 一起买房子🏠', done: false },
+      { id: 'b98', title: '98. 一起结婚👰‍♀️', done: false },
+      { id: 'b99', title: '99. 一起生娃👶', done: false },
+      { id: 'b100', title: '100. 一起白头偕老👵👴', done: false }
     ];
 
     let startDate = localStorage.getItem('kitty_love_start_date') || DEFAULT_START_DATE;
@@ -633,12 +633,46 @@
     let notes = JSON.parse(localStorage.getItem('kitty_love_notes')) || defaultNotes;
     let bucketList = JSON.parse(localStorage.getItem('kitty_love_bucket')) || defaultBucketList;
 
+    // 核心合并函数：将默认 100 件小事补充进来，同时完整保留用户自建的清单（如大碗面）及打卡状态
+    function mergeDefaultBucketList() {
+      const existingIds = new Set(bucketList.map(b => b.id));
+      const existingTitles = new Set(bucketList.map(b => b.title));
+      
+      let added = false;
+      defaultBucketList.forEach(defaultItem => {
+        if (!existingIds.has(defaultItem.id) && !existingTitles.has(defaultItem.title)) {
+          bucketList.push(defaultItem);
+          added = true;
+        }
+      });
+
+      if (added) {
+        localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
+        syncAllBucketsToCloud();
+      }
+    }
+
+    // 批量推送清单到 Supabase 云端
+    async function syncAllBucketsToCloud() {
+      if (!supabaseClient) return;
+      try {
+        const rows = bucketList.map(item => ({
+          id: item.id,
+          data_type: 'bucket',
+          content: item
+        }));
+        await supabaseClient.from('love_data').upsert(rows);
+      } catch (e) {
+        console.error("Batch bucket sync failed:", e);
+      }
+    }
+
     function initSupabase() {
       if (supabaseUrl && supabaseKey && window.supabase) {
         try {
           supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
           updateSyncBadge(true);
-          fetchCloudData(); // 从云端拉取最新数据
+          fetchCloudData();
         } catch (e) {
           console.error('Supabase init failed', e);
           updateSyncBadge(false);
@@ -686,16 +720,21 @@
           }
           if (cloudBuckets.length > 0) {
             bucketList = cloudBuckets;
-            localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
           }
+
+          // 从云端拉取后同步补齐 100 件小事全量展现
+          mergeDefaultBucketList();
 
           renderPhotos();
           renderNotes();
           renderBucketList();
           renderDashWidgets();
+        } else {
+          mergeDefaultBucketList();
         }
       } catch (err) {
         console.error("Cloud fetch failed:", err);
+        mergeDefaultBucketList();
       }
     }
 
@@ -724,6 +763,7 @@
     }
 
     window.onload = function() {
+      mergeDefaultBucketList();
       initSupabase();
       const isLoggedIn = sessionStorage.getItem('kitty_logged_in');
       if (isLoggedIn === 'true') {
@@ -1103,7 +1143,7 @@
 
       initSupabase();
       closeConfigModal();
-      showToast('Supabase 配置已更新，云端同步中...', 'success');
+      showToast('Supabase 配置已保存，云端数据同步中...', 'success');
     }
 
     function openConfigModal() { toggleModal('config-modal', true); }
