@@ -1,687 +1,422 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="h-full">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WTH ❤️ MZY - 甜蜜情侣小屋</title>
+  <title>WTH & MZY 's Romantic Space 🎀</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            kitty: {
-              50: '#fff0f5',
-              100: '#ffe4ed',
-              200: '#fecddb',
-              300: '#fda4bf',
-              400: '#fb7199',
-              500: '#f43f7a',
-              600: '#e11d62',
-              700: '#be1250',
-              accent: '#ff3366',
-              card: 'rgba(255, 255, 255, 0.85)'
-            }
-          },
-          fontFamily: {
-            sans: ['Nunito', '-apple-system', 'sans-serif'],
-            handwriting: ['Ma Shan Zheng', 'cursive']
-          },
-          boxShadow: {
-            'kitty-sm': '0 4px 14px 0 rgba(251, 113, 153, 0.15)',
-            'kitty-lg': '0 12px 30px -4px rgba(251, 113, 153, 0.25)',
-            'kitty-glow': '0 0 20px rgba(255, 51, 102, 0.35)'
-          }
-        }
-      }
-    }
-  </script>
-
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+    
     body {
-      font-family: 'Nunito', -apple-system, sans-serif;
-      background-color: #fff0f5;
-      background-image: 
-        radial-gradient(#fecddb 1.5px, transparent 1.5px), 
-        radial-gradient(#fecddb 1.5px, #fff0f5 1.5px);
-      background-size: 48px 48px;
-      background-position: 0 0, 24px 24px;
-      color: #4a2e35;
-      overflow-x: hidden;
+      font-family: 'Fredoka', 'Noto Sans SC', sans-serif;
+      background-color: #fff0f3;
+      color: #4a3e3d;
     }
+    
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #ffe6ea; }
+    ::-webkit-scrollbar-thumb { background: #ffb3c1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff758f; }
 
-    /* Claude-Style Glassmorphism Container */
-    .claude-glass {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(254, 205, 219, 0.8);
-      border-radius: 20px;
-    }
-
-    .claude-card {
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .claude-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 24px -6px rgba(244, 63, 122, 0.18);
-    }
-
-    /* Polaroid Framing with Pin & Tilt */
+    /* 拍立得悬浮效果 */
     .polaroid-card {
-      background: #ffffff;
-      padding: 12px 12px 20px 12px;
-      box-shadow: 0 10px 25px -5px rgba(225, 29, 98, 0.12);
-      border-radius: 8px;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
     .polaroid-card:hover {
-      transform: scale(1.04) rotate(0deg) !important;
-      z-index: 30;
-      box-shadow: 0 20px 35px -5px rgba(244, 63, 122, 0.25);
+      transform: translateY(-8px) rotate(0deg) scale(1.02) !important;
+      box-shadow: 0 20px 25px -5px rgba(255, 182, 193, 0.4), 0 8px 10px -6px rgba(255, 182, 193, 0.2);
     }
 
-    .tape-pin {
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70px;
-      height: 22px;
-      background: rgba(255, 228, 237, 0.85);
-      backdrop-filter: blur(4px);
-      border: 1px dashed #fb7199;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-      z-index: 10;
+    /* Claude 极简风玻璃拟态 */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 192, 203, 0.4);
     }
 
-    /* Floating Heart Particles */
-    @keyframes floatUp {
-      0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(-100vh) scale(1.2) rotate(360deg); opacity: 0; }
+    /* 飘落爱心动画 */
+    @keyframes floatHeart {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
     }
     .heart-particle {
       position: fixed;
       pointer-events: none;
-      animation: floatUp 3.5s ease-out forwards;
-      z-index: 9999;
+      z-index: 50;
+      animation: floatHeart 4s linear forwards;
     }
-
-    /* Smooth Tab Content Transitions */
-    .tab-content {
-      display: none;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .tab-content.active {
-      display: block;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #fecddb; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #fb7199; }
   </style>
 </head>
-<body class="h-full flex flex-col antialiased selection:bg-kitty-200 selection:text-kitty-700">
+<body class="h-screen flex overflow-hidden">
 
-  <!-- Toast Container -->
-  <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- 全屏大图 Preview Modal (Claude Lightbox Style) -->
-  <div id="lightbox-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-[90] p-4 transition-opacity duration-300">
-    <div class="relative max-w-4xl w-full flex flex-col items-center">
-      <button onclick="closeLightbox()" class="absolute -top-12 right-0 text-white/80 hover:text-white text-2xl p-2 transition">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <img id="lightbox-img" src="" alt="Preview" class="max-h-[80vh] w-auto rounded-2xl shadow-2xl border-4 border-white object-contain mb-4">
-      <p id="lightbox-caption" class="text-white font-semibold text-lg text-center tracking-wide"></p>
-    </div>
-  </div>
-
-  <!-- 登录页面 Modal -->
-  <div id="login-modal" class="fixed inset-0 bg-kitty-100/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-    <div class="claude-glass p-8 w-full max-w-md text-center shadow-kitty-lg relative overflow-hidden transition-all transform duration-300">
-      
-      <!-- Hello Kitty Avatar / Ribbon Decor -->
-      <div class="relative w-24 h-24 mx-auto mb-5 bg-gradient-to-tr from-kitty-200 to-kitty-100 rounded-full flex items-center justify-center border-4 border-white shadow-kitty-sm">
-        <span class="text-5xl select-none">🐱</span>
-        <div class="absolute -top-1 -right-1 text-2xl animate-bounce">🎀</div>
+  <!-- 1. 登录拦截弹窗 -->
+  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-pink-100/90 backdrop-blur-md">
+    <div class="glass-panel p-8 rounded-3xl max-w-md w-full mx-4 shadow-2xl text-center border-2 border-pink-300 relative">
+      <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-pink-400 rounded-full flex items-center justify-center text-4xl shadow-lg border-4 border-white">
+        🎀
       </div>
+      <h2 class="text-2xl font-bold text-pink-600 mt-6 mb-2">情侣专属小屋登录</h2>
+      <p class="text-xs text-pink-400 mb-6">WTH & MZY 的私密记录空间</p>
       
-      <h2 class="text-2xl font-black text-kitty-600 mb-1 tracking-tight">WTH ❤️ MZY</h2>
-      <p class="text-xs font-medium text-kitty-400 mb-6">请输入专属验证暗号开启情侣小屋</p>
-
-      <form onsubmit="handleLogin(event)" class="space-y-4">
-        <div class="text-left">
-          <label class="block text-xs font-bold text-kitty-500 mb-1 ml-1">账号</label>
-          <div class="relative">
-            <i class="fa-solid fa-user-heart absolute left-4 top-3.5 text-kitty-300 text-sm"></i>
-            <input type="text" id="login-username" required placeholder="请输入账号 (WTHMZY)" 
-                   class="w-full pl-10 pr-4 py-3 rounded-2xl border border-kitty-200 focus:border-kitty-500 focus:ring-4 focus:ring-kitty-100 focus:outline-none text-sm text-kitty-700 bg-white/90 transition-all">
-          </div>
+      <div class="space-y-4 text-left">
+        <div>
+          <label class="text-xs font-semibold text-pink-500 ml-1">账号</label>
+          <input type="text" id="login-account" placeholder="请输入账号" class="w-full mt-1 px-4 py-3 rounded-2xl bg-pink-50/50 border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400 transition text-sm">
         </div>
-
-        <div class="text-left">
-          <label class="block text-xs font-bold text-kitty-500 mb-1 ml-1">密码</label>
-          <div class="relative">
-            <i class="fa-solid fa-lock-heart absolute left-4 top-3.5 text-kitty-300 text-sm"></i>
-            <input type="password" id="login-password" required placeholder="请输入密码 (1314)" 
-                   class="w-full pl-10 pr-4 py-3 rounded-2xl border border-kitty-200 focus:border-kitty-500 focus:ring-4 focus:ring-kitty-100 focus:outline-none text-sm text-kitty-700 bg-white/90 transition-all">
-          </div>
+        <div>
+          <label class="text-xs font-semibold text-pink-500 ml-1">密码</label>
+          <input type="password" id="login-password" placeholder="请输入密码" class="w-full mt-1 px-4 py-3 rounded-2xl bg-pink-50/50 border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400 transition text-sm">
         </div>
+      </div>
 
-        <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-kitty-500 to-kitty-600 hover:from-kitty-600 hover:to-kitty-700 text-white font-bold rounded-2xl shadow-kitty-sm hover:shadow-kitty-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
-          <span>进入专属小屋</span>
-          <i class="fa-solid fa-arrow-right text-xs"></i>
-        </button>
-      </form>
+      <button onclick="handleLogin()" class="w-full mt-6 py-3 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-semibold rounded-2xl shadow-lg shadow-pink-300/50 transition transform active:scale-95">
+        解锁甜蜜空间 💕
+      </button>
     </div>
   </div>
 
-  <!-- 主界面 (登录后) -->
-  <div id="main-app" class="hidden h-screen flex flex-col md:flex-row overflow-hidden">
+  <!-- 2. 主页面结构 (Claude 极简侧边栏 + 内容区) -->
+  <div id="app-container" class="flex w-full h-full opacity-0 transition-opacity duration-500">
     
-    <!-- Claude-Style Navigation Sidebar -->
-    <aside class="w-full md:w-64 bg-white/70 backdrop-blur-xl border-r border-kitty-200 flex flex-col justify-between p-4 z-20 shrink-0">
-      <div>
-        <!-- App Title Logo -->
-        <div class="flex items-center gap-3 px-3 py-3 mb-6 bg-gradient-to-r from-kitty-100/80 to-transparent rounded-2xl">
-          <div class="w-10 h-10 rounded-xl bg-kitty-500 text-white flex items-center justify-center text-xl font-bold shadow-kitty-sm">
-            🎀
+    <!-- 侧边栏 -->
+    <aside class="w-64 glass-panel border-r border-pink-200/60 flex flex-col justify-between p-4 z-20">
+      <div class="space-y-6">
+        <!-- 侧边栏 Head -->
+        <div class="flex items-center gap-3 px-2 py-3 bg-pink-100/50 rounded-2xl border border-pink-200/50">
+          <div class="w-10 h-10 rounded-xl bg-pink-400 text-white flex items-center justify-center text-xl shadow">
+            🐱
           </div>
-          <div class="overflow-hidden">
-            <h1 class="text-base font-extrabold text-kitty-700 truncate leading-tight">WTH & MZY</h1>
-            <p class="text-[10px] text-kitty-400 font-semibold tracking-wider uppercase">Sweet Memory</p>
+          <div>
+            <h1 class="font-bold text-sm text-pink-700">WTH ❤️ MZY</h1>
+            <p class="text-[10px] text-pink-400 flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> 云端已同步
+            </p>
           </div>
         </div>
 
-        <!-- Nav Items -->
-        <nav class="space-y-1.5">
-          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-all text-kitty-600 bg-kitty-100/80">
-            <i class="fa-solid fa-heart-pulse text-base w-5 text-center"></i>
-            <span>爱意计数盘</span>
+        <!-- 导航菜单 -->
+        <nav class="space-y-1">
+          <button onclick="switchTab('tab-timer')" id="btn-tab-timer" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-pink-600 bg-pink-100/80 transition">
+            <i class="fa-solid fa-heart-pulse"></i> 纪念日时刻
           </button>
-          
-          <button onclick="switchTab('photos')" id="nav-photos" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-all text-kitty-400 hover:text-kitty-600 hover:bg-kitty-50">
-            <i class="fa-solid fa-camera-retro text-base w-5 text-center"></i>
-            <span>拍立得照片墙</span>
+          <button onclick="switchTab('tab-photos')" id="btn-tab-photos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-pink-400 hover:bg-pink-50 hover:text-pink-600 transition">
+            <i class="fa-solid fa-camera-retro"></i> 拍立得照片墙
           </button>
-
-          <button onclick="switchTab('notes')" id="nav-notes" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-all text-kitty-400 hover:text-kitty-600 hover:bg-kitty-50">
-            <i class="fa-solid fa-book-bookmark text-base w-5 text-center"></i>
-            <span>甜蜜生活小记</span>
+          <button onclick="switchTab('tab-notes')" id="btn-tab-notes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-pink-400 hover:bg-pink-50 hover:text-pink-600 transition">
+            <i class="fa-solid fa-book-bookmark"></i> 甜蜜日记本
           </button>
-
-          <button onclick="switchTab('bucketlist')" id="nav-bucketlist" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-all text-kitty-400 hover:text-kitty-600 hover:bg-kitty-50">
-            <i class="fa-solid fa-list-check text-base w-5 text-center"></i>
-            <span>情侣 100 件小事</span>
+          <button onclick="switchTab('tab-bucket')" id="btn-tab-bucket" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-pink-400 hover:bg-pink-50 hover:text-pink-600 transition">
+            <i class="fa-solid fa-list-check"></i> 100件小事
           </button>
         </nav>
       </div>
 
-      <!-- User Info & Logout -->
-      <div class="pt-4 border-t border-kitty-100 mt-4 flex items-center justify-between px-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-kitty-200 border border-kitty-300 flex items-center justify-center text-sm">
-            🐱
-          </div>
-          <div>
-            <div class="text-xs font-bold text-kitty-700">WTH & MZY</div>
-            <div class="text-[10px] text-emerald-500 font-medium flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 在线中
-            </div>
-          </div>
-        </div>
-        <button onclick="handleLogout()" title="退出登录" class="p-2 text-kitty-400 hover:text-kitty-600 hover:bg-kitty-100 rounded-xl transition">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
-      </div>
+      <!-- 退出登录 -->
+      <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 text-xs text-pink-400 hover:text-pink-600 hover:bg-pink-100/50 rounded-xl transition">
+        <i class="fa-solid fa-right-from-bracket"></i> 退出账号
+      </button>
     </aside>
 
-    <!-- Main Dynamic Content Canvas -->
-    <main class="flex-1 h-full overflow-y-auto p-4 md:p-8">
-      <div class="max-w-5xl mx-auto">
+    <!-- 主内容区 -->
+    <main class="flex-1 h-full overflow-y-auto p-8 relative">
 
-        <!-- Top Header Bar -->
-        <header class="flex justify-between items-center mb-6 pb-4 border-b border-kitty-200/60">
-          <div>
-            <h2 id="header-title" class="text-xl md:text-2xl font-black text-kitty-700 flex items-center gap-2">
-              <span>爱意计数盘</span>
-            </h2>
-            <p id="header-desc" class="text-xs text-kitty-400 mt-0.5">记录我们在一起的每一分秒 ⏳</p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button onclick="triggerLoveHearts()" class="px-3.5 py-2 bg-white/80 hover:bg-white text-kitty-600 border border-kitty-200 rounded-xl text-xs font-bold shadow-sm hover:shadow transition flex items-center gap-1.5">
-              <i class="fa-solid fa-wand-magic-sparkles text-kitty-500"></i>
-              <span class="hidden sm:inline">撒爱心</span>
-            </button>
-          </div>
-        </header>
-
-        <!-- TAB 1: Dashboard 概览 -->
-        <div id="tab-dashboard" class="tab-content active space-y-6">
+      <!-- TAB 1: 计时器概览 -->
+      <section id="tab-timer" class="tab-content max-w-4xl mx-auto space-y-6">
+        <div class="glass-panel p-8 rounded-3xl text-center relative overflow-hidden shadow-xl border-2 border-pink-200">
+          <div class="absolute -right-6 -bottom-6 text-9xl opacity-10 select-none">🎀</div>
+          <p class="text-xs uppercase tracking-widest text-pink-400 font-bold mb-2">LOVE COUNTER</p>
+          <h2 class="text-3xl font-bold text-pink-600 mb-6">我们在一起已经</h2>
           
-          <!-- Counter Card -->
-          <div class="claude-glass p-6 md:p-8 text-center relative overflow-hidden shadow-kitty-sm">
-            <div class="absolute -right-6 -bottom-6 text-9xl opacity-10 pointer-events-none select-none">🐱</div>
-            
-            <div class="inline-flex items-center gap-2 bg-pink-100/80 text-kitty-600 font-bold px-4 py-1.5 rounded-full text-xs mb-6 border border-pink-200/80">
-              <i class="fa-solid fa-sparkles text-kitty-400"></i>
-              <span>我们相爱已经</span>
+          <!-- 动态时间组件 -->
+          <div class="grid grid-cols-4 gap-4 max-w-lg mx-auto">
+            <div class="bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+              <span id="days" class="block text-3xl font-extrabold text-pink-500">0</span>
+              <span class="text-xs text-pink-400">DAYS</span>
             </div>
-
-            <!-- Numbers Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-2 max-w-3xl mx-auto">
-              <div class="bg-white/90 p-4 md:p-6 rounded-2xl border border-kitty-200 shadow-sm">
-                <span id="counter-days" class="text-4xl md:text-6xl font-black text-kitty-500 block tracking-tight">00</span>
-                <span class="text-xs font-bold text-kitty-400 mt-1 block">天</span>
-              </div>
-              <div class="bg-white/90 p-4 md:p-6 rounded-2xl border border-kitty-200 shadow-sm">
-                <span id="counter-hours" class="text-4xl md:text-6xl font-black text-kitty-500 block tracking-tight">00</span>
-                <span class="text-xs font-bold text-kitty-400 mt-1 block">小时</span>
-              </div>
-              <div class="bg-white/90 p-4 md:p-6 rounded-2xl border border-kitty-200 shadow-sm">
-                <span id="counter-minutes" class="text-4xl md:text-6xl font-black text-kitty-500 block tracking-tight">00</span>
-                <span class="text-xs font-bold text-kitty-400 mt-1 block">分钟</span>
-              </div>
-              <div class="bg-white/90 p-4 md:p-6 rounded-2xl border border-kitty-200 shadow-sm">
-                <span id="counter-seconds" class="text-4xl md:text-6xl font-black text-kitty-500 block tracking-tight">00</span>
-                <span class="text-xs font-bold text-kitty-400 mt-1 block">秒</span>
-              </div>
+            <div class="bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+              <span id="hours" class="block text-3xl font-extrabold text-pink-500">0</span>
+              <span class="text-xs text-pink-400">HOURS</span>
             </div>
-
-            <div class="flex items-center justify-center gap-2 text-xs text-kitty-400 mt-6">
-              <i class="fa-solid fa-calendar-heart text-kitty-300"></i>
-              <span>纪念日起点:</span>
-              <input type="date" id="start-date-picker" onchange="updateStartDate(this.value)" 
-                     class="bg-white/90 border border-kitty-200 rounded-lg px-2.5 py-1 text-xs text-kitty-600 font-semibold focus:outline-none focus:border-kitty-400">
+            <div class="bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+              <span id="minutes" class="block text-3xl font-extrabold text-pink-500">0</span>
+              <span class="text-xs text-pink-400">MINS</span>
+            </div>
+            <div class="bg-pink-50/80 p-4 rounded-2xl border border-pink-200">
+              <span id="seconds" class="block text-3xl font-extrabold text-pink-500">0</span>
+              <span class="text-xs text-pink-400">SECS</span>
             </div>
           </div>
 
-          <!-- Dashboard Quick Overview Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Recent Photo Widget -->
-            <div class="claude-glass p-5 shadow-kitty-sm">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-kitty-700 text-sm flex items-center gap-2">
-                  <i class="fa-solid fa-images text-kitty-500"></i>
-                  <span>最新拍立得</span>
-                </h3>
-                <button onclick="switchTab('photos')" class="text-xs text-kitty-400 hover:text-kitty-600 font-semibold">查看全部 →</button>
-              </div>
-              <div id="dash-recent-photo" class="aspect-video rounded-xl bg-kitty-50 border border-kitty-200 overflow-hidden flex items-center justify-center">
-                <!-- Dynamic insert -->
-              </div>
-            </div>
-
-            <!-- Recent Journal Widget -->
-            <div class="claude-glass p-5 shadow-kitty-sm">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-kitty-700 text-sm flex items-center gap-2">
-                  <i class="fa-solid fa-feather text-kitty-500"></i>
-                  <span>最新记录</span>
-                </h3>
-                <button onclick="switchTab('notes')" class="text-xs text-kitty-400 hover:text-kitty-600 font-semibold">查看全部 →</button>
-              </div>
-              <div id="dash-recent-note" class="p-4 bg-white/80 rounded-xl border border-kitty-200">
-                <!-- Dynamic insert -->
-              </div>
-            </div>
+          <!-- 设置在一起的时间点 -->
+          <div class="mt-8 flex items-center justify-center gap-2 text-xs text-pink-400">
+            <span>纪念起点：</span>
+            <input type="date" id="start-date" class="bg-white/80 border border-pink-200 rounded-lg px-2 py-1 focus:outline-none text-pink-600" onchange="updateStartDate(this.value)">
           </div>
+        </div>
+      </section>
 
+      <!-- TAB 2: 拍立得照片墙 -->
+      <section id="tab-photos" class="tab-content hidden max-w-5xl mx-auto space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-pink-700">📸 钉在墙上的拍立得</h2>
+            <p class="text-xs text-pink-400">记录属于我们的定格瞬间</p>
+          </div>
+          <button onclick="showUploadModal()" class="px-4 py-2 bg-pink-400 hover:bg-pink-500 text-white rounded-2xl shadow text-xs font-semibold flex items-center gap-2 transition">
+            <i class="fa-solid fa-plus"></i> 添加新照片
+          </button>
         </div>
 
-        <!-- TAB 2: Photos 相册墙 -->
-        <div id="tab-photos" class="tab-content space-y-6">
-          <div class="flex justify-between items-center">
-            <p class="text-xs text-kitty-400 font-medium">像拍立得一样记录我们的时刻（点击可全屏查看）</p>
-            <button onclick="openPhotoModal()" class="px-4 py-2.5 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition flex items-center gap-2 active:scale-95">
-              <i class="fa-solid fa-plus"></i> 钉上新照片
+        <!-- 照片卡片网格 -->
+        <div id="photos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+          <!-- 动态渲染照片 -->
+        </div>
+      </section>
+
+      <!-- TAB 3: 甜蜜日记本 -->
+      <section id="tab-notes" class="tab-content hidden max-w-3xl mx-auto space-y-6">
+        <div class="glass-panel p-6 rounded-3xl shadow-lg border border-pink-200">
+          <h3 class="text-sm font-bold text-pink-600 mb-3"><i class="fa-solid fa-pen-nib"></i> 写下今天的小确幸</h3>
+          <textarea id="note-input" rows="3" placeholder="记录今天发生的甜蜜趣事..." class="w-full p-4 rounded-2xl bg-pink-50/50 border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm resize-none"></textarea>
+          <div class="flex justify-end mt-3">
+            <button onclick="addNote()" class="px-5 py-2 bg-pink-400 hover:bg-pink-500 text-white rounded-xl text-xs font-semibold shadow transition">
+              发布日记 💕
             </button>
           </div>
+        </div>
 
-          <!-- Corkboard Wall Container -->
-          <div id="photo-wall" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-pink-200/30 border-2 border-dashed border-kitty-300/60 min-h-[300px]">
-            <!-- Dynamic Polaroid items -->
+        <div id="notes-list" class="space-y-4">
+          <!-- 动态渲染日记 -->
+        </div>
+      </section>
+
+      <!-- TAB 4: 100 件小事 -->
+      <section id="tab-bucket" class="tab-content hidden max-w-3xl mx-auto space-y-6">
+        <div class="glass-panel p-6 rounded-3xl shadow-lg border border-pink-200 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-pink-700">💖 情侣必做的 100 件小事</h2>
+            <p class="text-xs text-pink-400">打卡我们共同经历的所有美好</p>
+          </div>
+          <div class="text-right">
+            <span id="bucket-progress-text" class="text-xl font-bold text-pink-500">0 / 0</span>
+            <p class="text-[10px] text-pink-400">已完成打卡</p>
           </div>
         </div>
 
-        <!-- TAB 3: Notes 甜蜜日记 -->
-        <div id="tab-notes" class="tab-content space-y-6">
-          <div class="flex justify-between items-center">
-            <p class="text-xs text-kitty-400 font-medium">书写我们点点滴滴的回忆</p>
-            <button onclick="openNoteModal()" class="px-4 py-2.5 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition flex items-center gap-2 active:scale-95">
-              <i class="fa-solid fa-pen-nib"></i> 写日记
-            </button>
-          </div>
-
-          <div id="notes-list" class="space-y-4">
-            <!-- Dynamic Notes List -->
-          </div>
+        <div id="bucket-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 动态渲染清单 -->
         </div>
+      </section>
 
-        <!-- TAB 4: Bucket List 百件小事 -->
-        <div id="tab-bucketlist" class="tab-content space-y-6">
-          <div class="claude-glass p-5 shadow-kitty-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="w-full md:w-auto">
-              <h3 class="font-bold text-kitty-700 text-sm mb-1">情侣必做的小事进度</h3>
-              <p class="text-xs text-kitty-400">一起打卡实现每一个小愿望！</p>
-            </div>
-            <div class="w-full md:w-64">
-              <div class="flex justify-between text-xs font-bold text-kitty-600 mb-1">
-                <span>完成度</span>
-                <span id="bucket-progress-text">0/0</span>
-              </div>
-              <div class="w-full h-3 bg-kitty-100 rounded-full overflow-hidden border border-kitty-200">
-                <div id="bucket-progress-bar" class="h-full bg-gradient-to-r from-kitty-400 to-kitty-600 rounded-full transition-all duration-500" style="width: 0%"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center">
-            <div class="flex gap-2">
-              <button onclick="filterBucket('all')" id="bucket-btn-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-kitty-500 text-white">全部</button>
-              <button onclick="filterBucket('pending')" id="bucket-btn-pending" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-kitty-400 hover:text-kitty-600">待完成</button>
-              <button onclick="filterBucket('done')" id="bucket-btn-done" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-kitty-400 hover:text-kitty-600">已完成</button>
-            </div>
-            <button onclick="openBucketModal()" class="px-4 py-2 bg-kitty-100 hover:bg-kitty-200 text-kitty-600 font-bold rounded-xl text-xs transition flex items-center gap-1.5">
-              <i class="fa-solid fa-plus"></i> 添加愿望
-            </button>
-          </div>
-
-          <div id="bucket-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <!-- Dynamic Bucket list items -->
-          </div>
-        </div>
-
-      </div>
     </main>
   </div>
 
-  <!-- 添加照片 Modal -->
-  <div id="photo-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
-        <h3 class="font-bold text-kitty-700 text-base flex items-center gap-2">
-          <span>📌 钉上一张新照片</span>
-        </h3>
-        <button onclick="closePhotoModal()" class="text-kitty-300 hover:text-kitty-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+  <!-- 上传照片 Modal -->
+  <div id="photo-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="glass-panel p-6 rounded-3xl max-w-sm w-full mx-4 space-y-4">
+      <h3 class="text-base font-bold text-pink-600">添加拍立得照片</h3>
+      <div>
+        <label class="text-xs text-pink-500">照片 URL 链接 / base64</label>
+        <input type="text" id="photo-url" placeholder="https://..." class="w-full mt-1 p-3 rounded-xl border border-pink-200 text-xs focus:outline-none">
       </div>
-      
-      <form onsubmit="handleSavePhoto(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">选择本地照片 或 粘贴图片网址</label>
-          <input type="file" id="photo-file-input" accept="image/*" onchange="handleFileSelect(event)"
-                 class="w-full text-xs text-kitty-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-kitty-100 file:text-kitty-600 hover:file:bg-kitty-200 mb-2">
-          <input type="url" id="photo-url-input" placeholder="https:// 图片网络地址"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">照片标题 / 备注</label>
-          <input type="text" id="photo-title-input" required placeholder="例如：去海边看晚霞 🌅" 
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">记录日期</label>
-          <input type="date" id="photo-date-input" required 
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
-        </div>
-
-        <button type="submit" class="w-full py-3 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition">
-          保存并保存到照片墙
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- 添加日记 Modal -->
-  <div id="note-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
-        <h3 class="font-bold text-kitty-700 text-base flex items-center gap-2">
-          <span>📝 记录甜蜜生活</span>
-        </h3>
-        <button onclick="closeNoteModal()" class="text-kitty-300 hover:text-kitty-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      <div>
+        <label class="text-xs text-pink-500">照片说明</label>
+        <input type="text" id="photo-caption" placeholder="例如：在海边的告白" class="w-full mt-1 p-3 rounded-xl border border-pink-200 text-xs focus:outline-none">
       </div>
-      
-      <form onsubmit="handleSaveNote(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">日记标题</label>
-          <input type="text" id="note-title-input" required placeholder="例如：一起做手工蛋糕 🎂" 
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">详细内容</label>
-          <textarea id="note-content-input" rows="4" required placeholder="写下今天发生的美好故事..." 
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400"></textarea>
-        </div>
-
-        <button type="submit" class="w-full py-3 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition">
-          存入日记本
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- 添加愿望 Modal -->
-  <div id="bucket-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="claude-glass p-6 w-full max-w-md bg-white/95 shadow-kitty-lg">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-kitty-100">
-        <h3 class="font-bold text-kitty-700 text-base">✨ 新增情侣愿望</h3>
-        <button onclick="closeBucketModal()" class="text-kitty-300 hover:text-kitty-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closePhotoModal()" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-medium">取消</button>
+        <button onclick="savePhoto()" class="flex-1 py-2 bg-pink-400 hover:bg-pink-500 text-white rounded-xl text-xs font-medium">保存照片</button>
       </div>
-      
-      <form onsubmit="handleSaveBucket(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-kitty-500 mb-1">愿望事项</label>
-          <input type="text" id="bucket-title-input" required placeholder="例如：一起去看一次迪士尼烟花 🎆" 
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
-        </div>
-
-        <button type="submit" class="w-full py-3 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition">
-          添加至愿望清单
-        </button>
-      </form>
     </div>
   </div>
 
   <script>
-    // 默认基础数据
-    const DEFAULT_START_DATE = "2023-05-20";
-    let tempImageBase64 = "";
-    let currentBucketFilter = "all";
+    // -------------------------------------------------------------
+    // Supabase 配置与初始化
+    // -------------------------------------------------------------
+    const SUPABASE_URL = "https://dyotiyqvqwfgaxdrktwt.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_bNPfidm7HohmbXOy59z8vg_issqfro1";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const defaultPhotos = [
-      {
-        id: 'p1',
-        title: '第一次一起看晚霞 🌅',
-        date: '2023-06-01',
-        url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80',
-        rotate: -3
-      },
-      {
-        id: 'p2',
-        title: '野餐与好心情 🧺',
-        date: '2023-10-15',
-        url: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=600&q=80',
-        rotate: 4
-      },
-      {
-        id: 'p3',
-        title: '温馨烛光晚餐 🕯️',
-        date: '2024-02-14',
-        url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80',
-        rotate: -2
-      }
-    ];
-
-    const defaultNotes = [
-      {
-        id: 'n1',
-        title: '搭建属于我们的情侣小屋 🏠',
-        content: '今天我们在 GitHub 上建好了这个记录我们点滴的小网站！以后所有的开心、难忘时刻都要保存在这里~ 💖',
-        time: '2026-08-11'
-      }
-    ];
-
-    const defaultBucketList = [
-      { id: 'b1', title: '一起去看一次海边日出 🌅', done: true },
-      { id: 'b2', title: '一起去迪士尼看迪士尼烟花 🎆', done: false },
-      { id: 'b3', title: '穿情侣装去游乐园玩一整天 🎡', done: false },
-      { id: 'b4', title: '一起做一次手工 DIY 蛋糕 🎂', done: true }
-    ];
-
-    // LocalStorage 读取
-    let startDate = localStorage.getItem('kitty_love_start_date') || DEFAULT_START_DATE;
-    let photos = JSON.parse(localStorage.getItem('kitty_love_photos')) || defaultPhotos;
-    let notes = JSON.parse(localStorage.getItem('kitty_love_notes')) || defaultNotes;
-    let bucketList = JSON.parse(localStorage.getItem('kitty_love_bucket')) || defaultBucketList;
-
-    // 页面加载完毕后初始化
-    window.onload = function() {
-      const isLoggedIn = sessionStorage.getItem('kitty_logged_in');
-      if (isLoggedIn === 'true') {
-        showDashboard();
-      }
-      document.getElementById('start-date-picker').value = startDate;
-      startCounter();
+    // 全局 State
+    let loveData = {
+      startDate: "2023-05-20",
+      photos: [],
+      notes: [],
+      bucket: [
+        { id: 1, text: "一起看一次日出与日落", done: false },
+        { id: 2, text: "去一次迪士尼乐园", done: false },
+        { id: 3, text: "一起做一顿丰盛的大餐", done: false },
+        { id: 4, text: "去海边听海浪的声音", done: false },
+        { id: 5, text: "一起拍一套情侣写真", done: false },
+        { id: 6, text: "看一场浪漫的演唱会", done: false }
+      ]
     };
 
-    // 登录处理
-    function handleLogin(e) {
-      e.preventDefault();
-      const user = document.getElementById('login-username').value.trim();
-      const pass = document.getElementById('login-password').value.trim();
+    // -------------------------------------------------------------
+    // 登录与初始化
+    // -------------------------------------------------------------
+    function handleLogin() {
+      const acc = document.getElementById('login-account').value.trim();
+      const pwd = document.getElementById('login-password').value.trim();
 
-      if (user === 'WTHMZY' && pass === '1314') {
-        sessionStorage.setItem('kitty_logged_in', 'true');
-        showDashboard();
-        showToast('欢迎回到情侣小屋 💕', 'success');
-        triggerLoveHearts();
+      if (acc === 'WTHMZY' && pwd === '1314') {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('opacity-0');
+        initSpace();
       } else {
-        showToast('账号或密码错误，请重试哦！', 'error');
+        alert('账号或密码不正确哦，请重试！');
       }
     }
 
-    function handleLogout() {
-      sessionStorage.removeItem('kitty_logged_in');
-      document.getElementById('main-app').classList.add('hidden');
+    function logout() {
+      document.getElementById('app-container').classList.add('opacity-0');
       document.getElementById('login-modal').classList.remove('hidden');
-      showToast('已安全退出小屋', 'info');
     }
 
-    function showDashboard() {
-      document.getElementById('login-modal').classList.add('hidden');
-      document.getElementById('main-app').classList.remove('hidden');
-      document.getElementById('main-app').classList.add('flex');
+    async function initSpace() {
+      // 从 Supabase 拉取最新云端数据
+      await fetchCloudData();
+      
+      // 初始化计时器
+      document.getElementById('start-date').value = loveData.startDate;
+      setInterval(calculateTime, 1000);
+      calculateTime();
+
+      // 渲染视图
       renderPhotos();
       renderNotes();
-      renderBucketList();
-      renderDashWidgets();
+      renderBucket();
     }
 
-    // Tab 路由切换
-    function switchTab(tabName) {
-      const tabs = ['dashboard', 'photos', 'notes', 'bucketlist'];
-      const titleMap = {
-        'dashboard': { title: '爱意计数盘', desc: '记录我们在一起的每一分秒 ⏳' },
-        'photos': { title: '拍立得照片墙', desc: '珍藏我们最珍贵的瞬间 📷' },
-        'notes': { title: '甜蜜生活小记', desc: '书写属于我们的日常故事 ✍️' },
-        'bucketlist': { title: '情侣 100 件小事', desc: '一起完成属于我们的浪漫小愿望 ✨' }
-      };
-
-      tabs.forEach(t => {
-        const content = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`nav-${t}`);
-        if (t === tabName) {
-          content.classList.add('active');
-          btn.classList.add('bg-kitty-100/80', 'text-kitty-600');
-          btn.classList.remove('text-kitty-400');
+    // -------------------------------------------------------------
+    // Supabase 云端 CRUD
+    // -------------------------------------------------------------
+    async function fetchCloudData() {
+      try {
+        const { data, error } = await _supabase.from('love_data').select('*').eq('id', 'main_config').single();
+        if (data && data.content) {
+          loveData = data.content;
         } else {
-          content.classList.remove('active');
-          btn.classList.remove('bg-kitty-100/80', 'text-kitty-600');
-          btn.classList.add('text-kitty-400');
+          // 初始化写入一条数据
+          await syncToCloud();
         }
+      } catch (e) {
+        console.warn("使用本地默认配置初始化", e);
+      }
+    }
+
+    async function syncToCloud() {
+      try {
+        await _supabase.from('love_data').upsert({
+          id: 'main_config',
+          data_type: 'config',
+          content: loveData
+        });
+      } catch (e) {
+        console.error("云端同步失败:", e);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 计时器逻辑
+    // -------------------------------------------------------------
+    function calculateTime() {
+      const start = new Date(loveData.startDate);
+      const now = new Date();
+      const diff = now - start;
+
+      if (diff < 0) return;
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      document.getElementById('days').innerText = days;
+      document.getElementById('hours').innerText = hours;
+      document.getElementById('minutes').innerText = minutes;
+      document.getElementById('seconds').innerText = seconds;
+    }
+
+    async function updateStartDate(val) {
+      if (!val) return;
+      loveData.startDate = val;
+      calculateTime();
+      await syncToCloud();
+    }
+
+    // -------------------------------------------------------------
+    // 拍立得照片墙逻辑
+    // -------------------------------------------------------------
+    function showUploadModal() {
+      document.getElementById('photo-modal').classList.remove('hidden');
+    }
+    function closePhotoModal() {
+      document.getElementById('photo-modal').classList.add('hidden');
+    }
+
+    async function savePhoto() {
+      const url = document.getElementById('photo-url').value.trim();
+      const caption = document.getElementById('photo-caption').value.trim();
+
+      if (!url) return alert('请输入照片 URL');
+
+      const angles = [-3, -1.5, 1.5, 3];
+      const randomAngle = angles[Math.floor(Math.random() * angles.length)];
+
+      loveData.photos.unshift({
+        id: Date.now().toString(),
+        url,
+        caption: caption || '我们的甜蜜瞬间',
+        rotate: randomAngle,
+        date: new Date().toLocaleDateString()
       });
 
-      if (titleMap[tabName]) {
-        document.getElementById('header-title').innerHTML = `<span>${titleMap[tabName].title}</span>`;
-        document.getElementById('header-desc').innerText = titleMap[tabName].desc;
+      renderPhotos();
+      closePhotoModal();
+      document.getElementById('photo-url').value = '';
+      document.getElementById('photo-caption').value = '';
+
+      await syncToCloud();
+    }
+
+    async function deletePhoto(id) {
+      if (confirm('确定要删除这张照片吗？')) {
+        loveData.photos = loveData.photos.filter(p => p.id !== id);
+        renderPhotos();
+        await syncToCloud();
       }
     }
 
-    // 计时器逻辑
-    function startCounter() {
-      function updateTimer() {
-        const start = new Date(startDate + "T00:00:00").getTime();
-        const now = new Date().getTime();
-        const diff = now - start;
-
-        if (diff < 0) {
-          ['days', 'hours', 'minutes', 'seconds'].forEach(k => {
-            document.getElementById(`counter-${k}`).innerText = "00";
-          });
-          return;
-        }
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        document.getElementById('counter-days').innerText = String(days).padStart(2, '0');
-        document.getElementById('counter-hours').innerText = String(hours).padStart(2, '0');
-        document.getElementById('counter-minutes').innerText = String(minutes).padStart(2, '0');
-        document.getElementById('counter-seconds').innerText = String(seconds).padStart(2, '0');
-      }
-
-      updateTimer();
-      setInterval(updateTimer, 1000);
-    }
-
-    function updateStartDate(val) {
-      if (!val) return;
-      startDate = val;
-      localStorage.setItem('kitty_love_start_date', val);
-      showToast('纪念日设置已更新', 'success');
-    }
-
-    // 渲染拍立得墙
     function renderPhotos() {
-      const container = document.getElementById('photo-wall');
-      if (photos.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-12 text-kitty-400 text-xs font-semibold">还没有照片，快点击右上角“钉上新照片”吧！</div>`;
+      const container = document.getElementById('photos-grid');
+      if (loveData.photos.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-pink-300 text-xs">暂无拍立得照片，点击右上角添加吧！</div>`;
         return;
       }
 
-      container.innerHTML = photos.map(item => `
-        <div class="polaroid-card group cursor-pointer" style="transform: rotate(${item.rotate || 0}deg)" onclick="openLightbox('${escapeHtml(item.url)}', '${escapeHtml(item.title)}')">
-          <div class="tape-pin"></div>
-          <div class="overflow-hidden rounded-lg bg-pink-50 mb-3 aspect-square flex items-center justify-center">
-            <img src="${item.url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/400x400/ffb6c1/ffffff?text=Photo'">
+      container.innerHTML = loveData.photos.map(p => `
+        <div class="polaroid-card bg-white p-3 rounded-md shadow-md border border-pink-100 relative group cursor-pointer" style="transform: rotate(${p.rotate || 0}deg)">
+          <!-- 模拟胶带/图钉 -->
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-10 h-4 bg-pink-200/60 backdrop-blur-sm rounded-sm rotate-[-2deg]"></div>
+          
+          <div class="aspect-square bg-pink-50 overflow-hidden rounded mb-3">
+            <img src="${p.url}" class="w-full h-full object-cover" loading="lazy" alt="photo">
           </div>
-          <h3 class="font-bold text-kitty-700 text-xs mb-1 truncate">${escapeHtml(item.title)}</h3>
-          <div class="flex justify-between items-center text-[10px] text-kitty-400">
-            <span>📅 ${item.date}</span>
-            <button onclick="event.stopPropagation(); deletePhoto('${item.id}')" class="text-kitty-300 hover:text-red-500 p-1">
+          <div class="flex justify-between items-end px-1">
+            <div>
+              <p class="text-xs font-semibold text-pink-700">${p.caption}</p>
+              <p class="text-[10px] text-pink-300">${p.date}</p>
+            </div>
+            <button onclick="deletePhoto('${p.id}')" class="text-pink-300 hover:text-rose-500 text-xs opacity-0 group-hover:opacity-100 transition">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
@@ -689,320 +424,93 @@
       `).join('');
     }
 
-    function openLightbox(url, title) {
-      document.getElementById('lightbox-img').src = url;
-      document.getElementById('lightbox-caption').innerText = title;
-      const modal = document.getElementById('lightbox-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+    // -------------------------------------------------------------
+    // 日记本逻辑
+    // -------------------------------------------------------------
+    async function addNote() {
+      const text = document.getElementById('note-input').value.trim();
+      if (!text) return alert('请输入日记内容');
+
+      loveData.notes.unshift({
+        id: Date.now().toString(),
+        content: text,
+        date: new Date().toLocaleString()
+      });
+
+      renderNotes();
+      document.getElementById('note-input').value = '';
+      await syncToCloud();
     }
 
-    function closeLightbox() {
-      const modal = document.getElementById('lightbox-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+    async function deleteNote(id) {
+      loveData.notes = loveData.notes.filter(n => n.id !== id);
+      renderNotes();
+      await syncToCloud();
     }
 
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          tempImageBase64 = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function handleSavePhoto(e) {
-      e.preventDefault();
-      const urlInput = document.getElementById('photo-url-input').value.trim();
-      const title = document.getElementById('photo-title-input').value.trim();
-      const date = document.getElementById('photo-date-input').value;
-
-      const photoUrl = tempImageBase64 || urlInput;
-
-      if (!photoUrl) {
-        showToast('请先选择图片文件或输入图片网络链接！', 'error');
-        return;
-      }
-
-      const newPhoto = {
-        id: 'photo_' + Date.now(),
-        title: title,
-        date: date,
-        url: photoUrl,
-        rotate: Math.floor(Math.random() * 8) - 4
-      };
-
-      photos.unshift(newPhoto);
-      localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
-      renderPhotos();
-      renderDashWidgets();
-      closePhotoModal();
-      showToast('已钉上新照片 📷', 'success');
-      triggerLoveHearts();
-    }
-
-    function deletePhoto(id) {
-      photos = photos.filter(p => p.id !== id);
-      localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
-      renderPhotos();
-      renderDashWidgets();
-      showToast('已删除照片', 'info');
-    }
-
-    // 渲染日记 Feed
     function renderNotes() {
       const container = document.getElementById('notes-list');
-      if (notes.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-kitty-400 text-xs font-semibold">暂无日记，写下你们的第一篇甜蜜记录吧~</div>`;
+      if (loveData.notes.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-pink-300 text-xs">还没有留下记录，快写下第一条甜蜜日记吧！</div>`;
         return;
       }
 
-      container.innerHTML = notes.map(n => `
-        <div class="claude-glass p-5 shadow-kitty-sm relative hover:border-kitty-300 transition">
-          <div class="flex justify-between items-start mb-2">
-            <h4 class="font-bold text-kitty-700 text-sm flex items-center gap-2">
-              <span>${escapeHtml(n.title)}</span>
-            </h4>
-            <span class="text-[10px] text-kitty-500 bg-kitty-100/80 px-2.5 py-0.5 rounded-full border border-kitty-200/50 font-bold">${n.time}</span>
-          </div>
-          <p class="text-xs text-kitty-600 leading-relaxed whitespace-pre-wrap">${escapeHtml(n.content)}</p>
-          <div class="mt-3 text-right">
-            <button onclick="deleteNote('${n.id}')" class="text-[10px] text-kitty-300 hover:text-red-500 font-semibold transition">删除条目</button>
+      container.innerHTML = loveData.notes.map(n => `
+        <div class="glass-panel p-5 rounded-2xl shadow-sm border border-pink-100 relative group">
+          <p class="text-xs text-pink-800 whitespace-pre-wrap leading-relaxed">${n.content}</p>
+          <div class="flex justify-between items-center mt-3 pt-2 border-t border-pink-100/60">
+            <span class="text-[10px] text-pink-400"><i class="fa-regular fa-clock"></i> ${n.date}</span>
+            <button onclick="deleteNote('${n.id}')" class="text-pink-300 hover:text-rose-500 text-xs opacity-0 group-hover:opacity-100 transition">
+              删除
+            </button>
           </div>
         </div>
       `).join('');
     }
 
-    function handleSaveNote(e) {
-      e.preventDefault();
-      const title = document.getElementById('note-title-input').value.trim();
-      const content = document.getElementById('note-content-input').value.trim();
-
-      const newNote = {
-        id: 'note_' + Date.now(),
-        title: title,
-        content: content,
-        time: new Date().toLocaleDateString('zh-CN')
-      };
-
-      notes.unshift(newNote);
-      localStorage.setItem('kitty_love_notes', JSON.stringify(notes));
-      renderNotes();
-      renderDashWidgets();
-      closeNoteModal();
-      showToast('甜蜜日记存入成功 📝', 'success');
-    }
-
-    function deleteNote(id) {
-      notes = notes.filter(n => n.id !== id);
-      localStorage.setItem('kitty_love_notes', JSON.stringify(notes));
-      renderNotes();
-      renderDashWidgets();
-      showToast('已删除日记条目', 'info');
-    }
-
-    // 渲染 100 件小事 Bucket List
-    function renderBucketList() {
-      const container = document.getElementById('bucket-list-container');
-      const filtered = bucketList.filter(b => {
-        if (currentBucketFilter === 'pending') return !b.done;
-        if (currentBucketFilter === 'done') return b.done;
-        return true;
-      });
-
-      const doneCount = bucketList.filter(b => b.done).length;
-      const totalCount = bucketList.length;
-      const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-
-      document.getElementById('bucket-progress-text').innerText = `${doneCount}/${totalCount} (${percent}%)`;
-      document.getElementById('bucket-progress-bar').style.width = `${percent}%`;
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-kitty-400 text-xs font-semibold">暂无相关愿望</div>`;
-        return;
+    // -------------------------------------------------------------
+    // 100 件小事逻辑
+    // -------------------------------------------------------------
+    async function toggleBucket(id) {
+      const item = loveData.bucket.find(b => b.id === id);
+      if (item) {
+        item.done = !item.done;
+        renderBucket();
+        await syncToCloud();
       }
+    }
 
-      container.innerHTML = filtered.map(item => `
-        <div onclick="toggleBucketDone('${item.id}')" class="p-4 rounded-2xl bg-white/80 border ${item.done ? 'border-emerald-200 bg-emerald-50/30' : 'border-kitty-200'} flex items-center justify-between cursor-pointer hover:shadow-md transition">
-          <div class="flex items-center gap-3">
-            <div class="w-6 h-6 rounded-lg ${item.done ? 'bg-emerald-500 text-white' : 'border-2 border-kitty-300'} flex items-center justify-center text-xs transition">
-              ${item.done ? '<i class="fa-solid fa-check"></i>' : ''}
-            </div>
-            <span class="text-xs font-bold ${item.done ? 'line-through text-gray-400' : 'text-kitty-700'}">${escapeHtml(item.title)}</span>
+    function renderBucket() {
+      const container = document.getElementById('bucket-list');
+      const completedCount = loveData.bucket.filter(b => b.done).length;
+
+      document.getElementById('bucket-progress-text').innerText = `${completedCount} / ${loveData.bucket.length}`;
+
+      container.innerHTML = loveData.bucket.map(b => `
+        <div onclick="toggleBucket(${b.id})" class="p-4 rounded-2xl border ${b.done ? 'bg-pink-100/60 border-pink-300 text-pink-800' : 'glass-panel border-pink-100 text-pink-600'} cursor-pointer flex items-center justify-between transition">
+          <span class="text-xs font-medium ${b.done ? 'line-through opacity-70' : ''}">${b.id}. ${b.text}</span>
+          <div class="w-5 h-5 rounded-full border border-pink-300 flex items-center justify-center ${b.done ? 'bg-pink-400 text-white' : ''}">
+            ${b.done ? '✓' : ''}
           </div>
-          <button onclick="event.stopPropagation(); deleteBucket('${item.id}')" class="text-kitty-300 hover:text-red-500 p-1 text-xs">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
         </div>
       `).join('');
     }
 
-    function toggleBucketDone(id) {
-      const idx = bucketList.findIndex(b => b.id === id);
-      if (idx !== -1) {
-        bucketList[idx].done = !bucketList[idx].done;
-        localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-        renderBucketList();
-        if (bucketList[idx].done) {
-          triggerLoveHearts();
-          showToast('已打卡完成一项小事！🎉', 'success');
-        }
-      }
-    }
+    // -------------------------------------------------------------
+    // Tab 切换逻辑
+    // -------------------------------------------------------------
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
 
-    function filterBucket(type) {
-      currentBucketFilter = type;
-      ['all', 'pending', 'done'].forEach(t => {
-        const btn = document.getElementById(`bucket-btn-${t}`);
-        if (t === type) {
-          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-kitty-500 text-white";
-        } else {
-          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-kitty-400 hover:text-kitty-600";
-        }
-      });
-      renderBucketList();
-    }
-
-    function handleSaveBucket(e) {
-      e.preventDefault();
-      const title = document.getElementById('bucket-title-input').value.trim();
-      if (!title) return;
-
-      bucketList.unshift({
-        id: 'bucket_' + Date.now(),
-        title: title,
-        done: false
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-pink-100/80', 'text-pink-600');
+        btn.classList.add('text-pink-400');
       });
 
-      localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-      renderBucketList();
-      closeBucketModal();
-      showToast('新愿望已加入清单 ✨', 'success');
-    }
-
-    function deleteBucket(id) {
-      bucketList = bucketList.filter(b => b.id !== id);
-      localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-      renderBucketList();
-      showToast('已删除愿望', 'info');
-    }
-
-    // 渲染 Dashboard 小挂件
-    function renderDashWidgets() {
-      const photoWidget = document.getElementById('dash-recent-photo');
-      if (photos.length > 0) {
-        const top = photos[0];
-        photoWidget.innerHTML = `
-          <div class="relative w-full h-full cursor-pointer group" onclick="openLightbox('${escapeHtml(top.url)}', '${escapeHtml(top.title)}')">
-            <img src="${top.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-            <div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-black/70 to-transparent text-white text-xs font-bold truncate">
-              ${escapeHtml(top.title)}
-            </div>
-          </div>
-        `;
-      } else {
-        photoWidget.innerHTML = `<span class="text-xs text-kitty-300">暂无相片</span>`;
-      }
-
-      const noteWidget = document.getElementById('dash-recent-note');
-      if (notes.length > 0) {
-        const top = notes[0];
-        noteWidget.innerHTML = `
-          <h4 class="font-bold text-kitty-700 text-xs mb-1 truncate">${escapeHtml(top.title)}</h4>
-          <p class="text-[11px] text-kitty-500 line-clamp-2">${escapeHtml(top.content)}</p>
-        `;
-      } else {
-        noteWidget.innerHTML = `<span class="text-xs text-kitty-300">暂无日记</span>`;
-      }
-    }
-
-    // Modal 隐藏与显示
-    function openPhotoModal() {
-      tempImageBase64 = "";
-      document.getElementById('photo-file-input').value = "";
-      document.getElementById('photo-url-input').value = "";
-      document.getElementById('photo-title-input').value = "";
-      document.getElementById('photo-date-input').valueAsDate = new Date();
-      toggleModal('photo-modal', true);
-    }
-    function closePhotoModal() { toggleModal('photo-modal', false); }
-
-    function openNoteModal() {
-      document.getElementById('note-title-input').value = "";
-      document.getElementById('note-content-input').value = "";
-      toggleModal('note-modal', true);
-    }
-    function closeNoteModal() { toggleModal('note-modal', false); }
-
-    function openBucketModal() {
-      document.getElementById('bucket-title-input').value = "";
-      toggleModal('bucket-modal', true);
-    }
-    function closeBucketModal() { toggleModal('bucket-modal', false); }
-
-    function toggleModal(id, show) {
-      const el = document.getElementById(id);
-      if (show) {
-        el.classList.remove('hidden');
-        el.classList.add('flex');
-      } else {
-        el.classList.add('hidden');
-        el.classList.remove('flex');
-      }
-    }
-
-    // Claude-style Toast 消息提示
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      
-      const bgMap = {
-        'success': 'bg-kitty-600 text-white',
-        'error': 'bg-red-500 text-white',
-        'info': 'bg-gray-800 text-white'
-      };
-
-      toast.className = `px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all transform duration-300 translate-y-2 opacity-0 flex items-center gap-2 ${bgMap[type] || bgMap.info}`;
-      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
-
-      container.appendChild(toast);
-      
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', '-translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 2500);
-    }
-
-    // 飘落爱心动画特效
-    function triggerLoveHearts() {
-      const icons = ['❤️', '💖', '🎀', '🌸', '✨'];
-      for (let i = 0; i < 12; i++) {
-        setTimeout(() => {
-          const heart = document.createElement('div');
-          heart.className = 'heart-particle text-xl select-none';
-          heart.innerText = icons[Math.floor(Math.random() * icons.length)];
-          heart.style.left = (Math.random() * 90 + 5) + 'vw';
-          heart.style.top = '100vh';
-          heart.style.animationDuration = (Math.random() * 1.5 + 2.5) + 's';
-          document.body.appendChild(heart);
-          setTimeout(() => heart.remove(), 3500);
-        }, i * 120);
-      }
-    }
-
-    // 防 XSS 转义
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>"']/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-      });
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      activeBtn.classList.add('bg-pink-100/80', 'text-pink-600');
+      activeBtn.classList.remove('text-pink-400');
     }
   </script>
 </body>
