@@ -107,6 +107,25 @@
       z-index: 9999;
     }
 
+    /* 鼠标移动跟随小爱心动画 */
+    @keyframes mouseHeartFloat {
+      0% {
+        transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: translate(-50%, -60px) scale(1.2) rotate(15deg);
+        opacity: 0;
+      }
+    }
+    .mouse-heart {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      font-size: 14px;
+      animation: mouseHeartFloat 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
     .tab-content {
       display: none;
       opacity: 0;
@@ -1223,6 +1242,27 @@
         }, i * 120);
       }
     }
+
+    // 鼠标移动跟随动态小爱心特效
+    (function initMouseFollowHearts() {
+      let lastTime = 0;
+      const icons = ['❤️', '💖', '💗', '💕', '✨', '🌸', '💓'];
+      
+      window.addEventListener('mousemove', function(e) {
+        const now = Date.now();
+        if (now - lastTime < 45) return; // 控制产生频率，避免卡顿
+        lastTime = now;
+
+        const heart = document.createElement('div');
+        heart.className = 'mouse-heart select-none';
+        heart.innerText = icons[Math.floor(Math.random() * icons.length)];
+        heart.style.left = e.clientX + 'px';
+        heart.style.top = e.clientY + 'px';
+
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 900);
+      });
+    })();
 
     function escapeHtml(str) {
       if (!str) return '';
