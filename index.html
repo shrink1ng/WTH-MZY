@@ -976,8 +976,8 @@
           const cloudConfigs = data.filter(d => d.data_type === 'config');
 
           if (cloudPhotos.length > 0) {
-            // 按日期倒序排列，确保最新照片在前（dash-recent-photo 取 [0]）
-            cloudPhotos.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            // 按上传时间倒序排列（新数据用 uploadedAt，老数据 fallback 到 date）
+            cloudPhotos.sort((a, b) => (b.uploadedAt || 0) - (a.uploadedAt || 0) || (b.date || '').localeCompare(a.date || ''));
             photos = cloudPhotos;
             localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
           }
@@ -1542,7 +1542,8 @@
         title: title,
         date: date,
         url: photoUrl,
-        rotate: Math.floor(Math.random() * 8) - 4
+        rotate: Math.floor(Math.random() * 8) - 4,
+        uploadedAt: Date.now()
       };
 
       photos.unshift(newPhoto);
