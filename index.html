@@ -1968,7 +1968,7 @@ const LOVE_QUOTES = [
     }
 
     // 从云端拉取全量最新数据
-    async function fetchCloudData(isSilent = false) {
+    async function fetchCloudData(isSilent = false, skipRender = false) {
       if (!supabaseClient) return;
       try {
         const { data, error } = await supabaseClient.from('love_data').select('*');
@@ -2008,10 +2008,12 @@ const LOVE_QUOTES = [
 
           mergeDefaultBucketList();
 
-          renderPhotos();
-          renderNotes();
-          renderBucketList();
-          renderDashWidgets();
+          if (!skipRender) {
+            renderPhotos();
+            renderNotes();
+            renderBucketList();
+            renderDashWidgets();
+          }
 
           if (!isSilent) {
             showToast('已自动同步云端最新记录 💕', 'info');
@@ -2110,9 +2112,9 @@ const LOVE_QUOTES = [
         loading.classList.add('flex');
         document.getElementById('loading-quote').innerText = randomQuote();
 
-        // 等待云端数据同步完成
+        // 等待云端数据同步完成（跳过渲染，showDashboard 统一渲染）
         if (supabaseClient) {
-          await fetchCloudData(true);
+          await fetchCloudData(true, true);
         }
 
         // 隐藏加载，进入主界面
