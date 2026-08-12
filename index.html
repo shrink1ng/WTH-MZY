@@ -675,6 +675,11 @@
           <input type="date" id="photo-date-input" required 
                  class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
         </div>
+        <div>
+          <label class="block text-xs font-bold text-kitty-500 mb-1">拍摄地点</label>
+          <input type="text" id="photo-location-input" placeholder="例如：厦门鼓浪屿 🏖️"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-kitty-200 text-xs text-kitty-700 focus:outline-none focus:border-kitty-400">
+        </div>
         <button type="submit" id="photo-submit-btn" class="w-full py-3 bg-kitty-500 hover:bg-kitty-600 text-white font-bold rounded-xl text-xs shadow-kitty-sm transition">
           保存并同步上传
         </button>
@@ -2225,7 +2230,7 @@ const LOVE_QUOTES = [
           </div>
           <h3 class="font-bold text-kitty-700 text-xs mb-1 truncate">${escapeHtml(item.title)}</h3>
           <div class="flex justify-between items-center text-[10px] text-kitty-400">
-            <span>\u{1f4c5} ${item.date}</span>
+            <span>\u{1f4c5} ${item.date}${item.location ? ' · \u{1f4cd}' + escapeHtml(item.location) : ''}</span>
             <button onclick="event.stopPropagation(); deletePhoto('${item.id}')" class="text-kitty-300 hover:text-red-500 p-1">
               <i class="fa-solid fa-trash-can"></i>
             </button>
@@ -2486,6 +2491,8 @@ const LOVE_QUOTES = [
       document.getElementById('photo-url-input').value = "";
       document.getElementById('photo-title-input').value = "";
       document.getElementById('photo-date-input').valueAsDate = new Date();
+      document.getElementById('photo-location-input').value = "";
+      document.getElementById('photo-location-input').placeholder = "例如：厦门鼓浪屿 🏖️";
       
       const statusEl = document.getElementById('photo-file-status');
       if (statusEl) statusEl.innerText = "";
@@ -2496,6 +2503,103 @@ const LOVE_QUOTES = [
     }
     function closePhotoModal() { toggleModal('photo-modal', false); }
 
+    // ── EXIF 解析：自动读取照片拍摄时间和GPS位置 ──
+    function parseExif(arrayBuffer) {
+      const data = new DataView(arrayBuffer);
+      let offset = 2; // skip SOI marker
+      
+      function readUint16(off) { return data.getUint16(off, false); }
+      function readUint32(off) { return data.getUint32(off, false); }
+      
+      // Find APP1 (0xFFE1)
+      while (offset < data.byteLength - 2) {
+        if (data.getUint8(offset) === 0xFF && data.getUint8(offset + 1) === 0xE1) break;
+        offset++;
+      }
+      if (offset >= data.byteLength - 2) return null;
+      
+      const app1Start = offset + 2;
+      // Check "Exif\0\0"
+      if (data.getUint32(app1Start) !== 0x45786966) return null; // "Exif"
+      
+      const tiffStart = app1Start + 6;
+      const littleEndian = data.getUint16(tiffStart) === 0x4949;
+      const magic = data.getUint16(tiffStart + 2, littleEndian);
+      if (magic !== 0x002A) return null;
+      
+      let ifd0Off = data.getUint32(tiffStart + 4, littleEndian);
+      
+      function readString(off, len) {
+        let str = '';
+        for (let i = 0; i < len && data.getUint8(off + i) !== 0; i++) {
+          str += String.fromCharCode(data.getUint8(off + i));
+        }
+        return str;
+      }
+      
+      function readRational(off) {
+        const num = data.getUint32(off, littleEndian);
+        const den = data.getUint32(off + 4, littleEndian);
+        return den ? num / den : 0;
+      }
+      
+      const result = { dateTime: null, lat: null, lon: null };
+      let gpsIfdOff = null;
+      
+      // Walk IFD0
+      const entries0 = data.getUint16(tiffStart + ifd0Off, littleEndian);
+      for (let i = 0; i < entries0; i++) {
+        const entryOff = tiffStart + ifd0Off + 2 + i * 12;
+        const tag = data.getUint16(entryOff, littleEndian);
+        const type = data.getUint16(entryOff + 2, littleEndian);
+        const count = data.getUint32(entryOff + 4, littleEndian);
+        const valOff = tiffStart + data.getUint32(entryOff + 8, littleEndian);
+        
+        if (tag === 0x9003 && type === 2) { // DateTimeOriginal
+          result.dateTime = readString(valOff, count);
+        } else if (tag === 0x8825) { // GPS IFD pointer
+          gpsIfdOff = data.getUint32(entryOff + 8, littleEndian);
+        }
+      }
+      
+      // Walk GPS IFD
+      if (gpsIfdOff) {
+        const entriesGps = data.getUint16(tiffStart + gpsIfdOff, littleEndian);
+        let latRef = 'N', lonRef = 'E';
+        let latDeg = 0, latMin = 0, latSec = 0;
+        let lonDeg = 0, lonMin = 0, lonSec = 0;
+        
+        for (let i = 0; i < entriesGps; i++) {
+          const entryOff = tiffStart + gpsIfdOff + 2 + i * 12;
+          const tag = data.getUint16(entryOff, littleEndian);
+          const valOff = tiffStart + data.getUint32(entryOff + 8, littleEndian);
+          
+          if (tag === 1) latRef = readString(valOff, 2);
+          else if (tag === 2) { latDeg = readRational(valOff); latMin = readRational(valOff + 8); latSec = readRational(valOff + 16); }
+          else if (tag === 3) lonRef = readString(valOff, 2);
+          else if (tag === 4) { lonDeg = readRational(valOff); lonMin = readRational(valOff + 8); lonSec = readRational(valOff + 16); }
+        }
+        
+        result.lat = (latDeg + latMin / 60 + latSec / 3600) * (latRef === 'S' ? -1 : 1);
+        result.lon = (lonDeg + lonMin / 60 + lonSec / 3600) * (lonRef === 'W' ? -1 : 1);
+      }
+      
+      return result;
+    }
+
+    async function reverseGeocode(lat, lon) {
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12&accept-language=zh`);
+        const json = await resp.json();
+        if (json && json.display_name) {
+          // 提取简短地名：取前2-3个逗号分隔的部分
+          const parts = json.display_name.split(',');
+          return parts.slice(0, 3).join('，').trim();
+        }
+      } catch (e) { /* ignore */ }
+      return null;
+    }
+
     function handleFileSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -2505,39 +2609,61 @@ const LOVE_QUOTES = [
       
       if (submitBtn) submitBtn.disabled = true;
       if (statusEl) {
-        statusEl.innerText = "⏳ 手机图片压缩优化中...";
+        statusEl.innerText = "⏳ 读取照片信息中...";
         statusEl.className = "text-[10px] text-amber-500 mb-2 font-bold animate-pulse";
       }
 
+      // 并行：ArrayBuffer 解析 EXIF + DataURL 压缩
+      const arrayBufPromise = new Promise(resolve => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.readAsArrayBuffer(file);
+      });
+
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = async function(evt) {
         const img = new Image();
-        img.onload = function() {
-          // Canvas 自动等比例缩放压缩
+        img.onload = async function() {
+          // Canvas 压缩
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const maxDim = 1080; // 移动端最适宜图片分辨率宽度
-
+          const maxDim = 1080;
           if (width > height) {
-            if (width > maxDim) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            }
+            if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
           } else {
-            if (height > maxDim) {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
+            if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
           }
-
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-
-          // 导出为 70% 质量 JPEG，图片体积大幅缩减 90% 以上
           tempImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          // 解析 EXIF
+          try {
+            const arrayBuf = await arrayBufPromise;
+            const exif = parseExif(arrayBuf);
+            if (exif) {
+              // 自动填充日期
+              if (exif.dateTime) {
+                const dt = exif.dateTime.replace(':', '-').replace(':', '-').split(' ')[0]; // "YYYY:MM:DD HH:MM:SS" → "YYYY-MM-DD"
+                document.getElementById('photo-date-input').value = dt;
+              }
+              // 自动填充地点
+              if (exif.lat && exif.lon) {
+                const locInput = document.getElementById('photo-location-input');
+                locInput.placeholder = '📍 正在获取位置...';
+                const addr = await reverseGeocode(exif.lat, exif.lon);
+                if (addr) {
+                  locInput.value = addr;
+                } else {
+                  locInput.value = `${exif.lat.toFixed(4)}, ${exif.lon.toFixed(4)}`;
+                }
+                locInput.placeholder = '例如：厦门鼓浪屿 🏖️';
+              }
+            }
+          } catch (exifErr) { /* EXIF 解析失败不阻塞 */ }
 
           if (submitBtn) submitBtn.disabled = false;
           if (statusEl) {
@@ -2548,10 +2674,7 @@ const LOVE_QUOTES = [
         };
         img.onerror = function() {
           if (submitBtn) submitBtn.disabled = false;
-          if (statusEl) {
-            statusEl.innerText = "❌ 图片读取失败，请重试";
-            statusEl.className = "text-[10px] text-red-500 mb-2 font-bold";
-          }
+          if (statusEl) { statusEl.innerText = "❌ 图片读取失败，请重试"; statusEl.className = "text-[10px] text-red-500 mb-2 font-bold"; }
         };
         img.src = evt.target.result;
       };
@@ -2563,6 +2686,7 @@ const LOVE_QUOTES = [
       const urlInput = document.getElementById('photo-url-input').value.trim();
       const title = document.getElementById('photo-title-input').value.trim();
       const date = document.getElementById('photo-date-input').value;
+      const location = document.getElementById('photo-location-input').value.trim();
 
       const photoUrl = tempImageBase64 || urlInput;
 
@@ -2575,6 +2699,7 @@ const LOVE_QUOTES = [
         id: 'photo_' + Date.now(),
         title: title,
         date: date,
+        location: location,
         url: photoUrl,
         rotate: Math.floor(Math.random() * 8) - 4,
         uploadedAt: Date.now()
