@@ -2128,6 +2128,12 @@ const LOVE_QUOTES = [
       document.getElementById('login-modal').classList.add('hidden');
       document.getElementById('main-app').classList.remove('hidden');
       document.getElementById('main-app').classList.add('flex');
+      document.getElementById('start-date-picker').value = startDate;
+      // 立即刷新计数器
+      const start = new Date(startDate + "T00:00:00").getTime();
+      const now = new Date().getTime();
+      const diff = now - start;
+      document.getElementById('counter-days').innerText = diff > 0 ? String(Math.floor(diff / (1000 * 60 * 60 * 24))) : '0';
       renderPhotos();
       renderNotes();
       renderBucketList();
@@ -2170,9 +2176,7 @@ const LOVE_QUOTES = [
         const diff = now - start;
 
         if (diff < 0) {
-          ['days', 'hours', 'minutes', 'seconds'].forEach(k => {
-            document.getElementById(`counter-${k}`).innerText = "00";
-          });
+          document.getElementById('counter-days').innerText = "0";
           return;
         }
 
