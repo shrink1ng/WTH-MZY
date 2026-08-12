@@ -2246,7 +2246,7 @@ const LOVE_QUOTES = [
         html += `<button onclick="goPhotoPage(${currentPhotoPage + 1})" ${currentPhotoPage === totalPages ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-xs font-bold ${currentPhotoPage === totalPages ? 'bg-kitty-100 text-kitty-300 cursor-not-allowed' : 'bg-white text-kitty-500 hover:bg-kitty-100 border border-kitty-200'} transition"><i class="fa-solid fa-chevron-right"></i></button>`;
         pagination.innerHTML = html;
       } else {
-        pagination.innerHTML = '';
+        pagination.innerHTML = `<span class="text-[10px] text-kitty-400 font-medium">共 ${photos.length} 张</span>`;
       }
     }
 
