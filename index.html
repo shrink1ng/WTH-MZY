@@ -192,7 +192,7 @@
     </div>
   </div>
 
-  <!-- 登录拦截弹窗 (已去掉账号密码额外提示) -->
+  <!-- 登录拦截弹窗 -->
   <div id="login-modal" class="fixed inset-0 bg-kitty-100/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
     <div class="claude-glass p-8 w-full max-w-md text-center shadow-kitty-lg relative overflow-hidden transition-all transform duration-300">
       <div class="relative w-24 h-24 mx-auto mb-5 bg-gradient-to-tr from-kitty-200 to-kitty-100 rounded-full flex items-center justify-center border-4 border-white shadow-kitty-sm">
@@ -297,6 +297,10 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <button onclick="manualSyncCloud()" title="拉取云端最新数据" class="px-3.5 py-2 bg-white/80 hover:bg-white text-kitty-600 border border-kitty-200 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate text-kitty-500"></i>
+              <span class="hidden sm:inline">手动刷新</span>
+            </button>
             <button onclick="openConfigModal()" class="px-3.5 py-2 bg-white/80 hover:bg-white text-kitty-600 border border-kitty-200 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
               <i class="fa-solid fa-cloud-arrow-up text-kitty-500"></i>
               <span class="hidden sm:inline">多端同步</span>
@@ -511,8 +515,9 @@
     const DEFAULT_START_DATE = "2023-05-20";
     let tempImageBase64 = "";
     let currentBucketFilter = "all";
+    let realtimeChannel = null;
 
-    // Supabase 预填凭证 (你的专有云数据库)
+    // Supabase 云数据库凭证
     let supabaseClient = null;
     let supabaseUrl = localStorage.getItem('kitty_sp_url') || "https://dyotiyqvqwfgaxdrktwt.supabase.co";
     let supabaseKey = localStorage.getItem('kitty_sp_key') || "sb_publishable_bNPfidm7HohmbXOy59z8vg_issqfro1";
@@ -652,7 +657,7 @@
     let notes = JSON.parse(localStorage.getItem('kitty_love_notes')) || defaultNotes;
     let bucketList = JSON.parse(localStorage.getItem('kitty_love_bucket')) || defaultBucketList;
 
-    // 核心合并函数：将默认 100 件小事补充进来，同时完整保留用户自建的清单（如大碗面）及打卡状态
+    // 核心合并函数：补充 100 件小事并保留用户自建项
     function mergeDefaultBucketList() {
       const existingIds = new Set(bucketList.map(b => b.id));
       const existingTitles = new Set(bucketList.map(b => b.title));
@@ -692,6 +697,7 @@
           supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
           updateSyncBadge(true);
           fetchCloudData();
+          setupRealtimeSubscription();
         } catch (e) {
           console.error('Supabase init failed', e);
           updateSyncBadge(false);
@@ -701,13 +707,36 @@
       }
     }
 
+    // 设置 Supabase 实时双向监听引擎 (WebSocket Realtime)
+    function setupRealtimeSubscription() {
+      if (!supabaseClient) return;
+      try {
+        if (realtimeChannel) {
+          supabaseClient.removeChannel(realtimeChannel);
+        }
+        realtimeChannel = supabaseClient
+          .channel('public:love_data')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'love_data' },
+            (payload) => {
+              console.log('Realtime sync event received:', payload);
+              fetchCloudData(true); // 收到更新推送，自动静默刷新
+            }
+          )
+          .subscribe();
+      } catch (err) {
+        console.error("Realtime subscription setup failed:", err);
+      }
+    }
+
     function updateSyncBadge(isOnline) {
       const el = document.getElementById('cloud-status-indicator');
       const badge = document.getElementById('sync-status-badge');
       if (isOnline) {
-        if (el) el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 云端已同步`;
+        if (el) el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 云端已同步 (实时)`;
         if (el) el.className = "text-[10px] text-emerald-600 font-medium flex items-center gap-1 cursor-pointer";
-        if (badge) badge.innerText = "状态：已成功连接 Supabase 云端";
+        if (badge) badge.innerText = "状态：已成功连接 Supabase 云端并开启实时同步";
         if (badge) badge.className = "text-xs font-bold text-emerald-600";
       } else {
         if (el) el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> 本地模式 (点击配置同步)`;
@@ -717,8 +746,8 @@
       }
     }
 
-    // 从云端同步数据
-    async function fetchCloudData() {
+    // 从云端拉取全量最新数据
+    async function fetchCloudData(isSilent = false) {
       if (!supabaseClient) return;
       try {
         const { data, error } = await supabaseClient.from('love_data').select('*');
@@ -728,6 +757,7 @@
           const cloudPhotos = data.filter(d => d.data_type === 'photo').map(d => d.content);
           const cloudNotes = data.filter(d => d.data_type === 'note').map(d => d.content);
           const cloudBuckets = data.filter(d => d.data_type === 'bucket').map(d => d.content);
+          const cloudConfigs = data.filter(d => d.data_type === 'config');
 
           if (cloudPhotos.length > 0) {
             photos = cloudPhotos;
@@ -741,13 +771,25 @@
             bucketList = cloudBuckets;
           }
 
-          // 从云端拉取后同步补齐 100 件小事全量展现
+          // 纪念日起点云端同步
+          const dateCfg = cloudConfigs.find(c => c.id === 'start_date');
+          if (dateCfg && dateCfg.content && dateCfg.content.date) {
+            startDate = dateCfg.content.date;
+            localStorage.setItem('kitty_love_start_date', startDate);
+            const datePicker = document.getElementById('start-date-picker');
+            if (datePicker) datePicker.value = startDate;
+          }
+
           mergeDefaultBucketList();
 
           renderPhotos();
           renderNotes();
           renderBucketList();
           renderDashWidgets();
+
+          if (isSilent) {
+            showToast('已自动同步云端最新记录 💕', 'info');
+          }
         } else {
           mergeDefaultBucketList();
         }
@@ -757,12 +799,22 @@
       }
     }
 
+    function manualSyncCloud() {
+      if (!supabaseClient) {
+        showToast('请先配置 Supabase 云端密钥！', 'error');
+        openConfigModal();
+        return;
+      }
+      fetchCloudData(false);
+      showToast('正在从云端刷新最新数据...', 'info');
+    }
+
     // 推送单个数据到云端
     async function pushCloudItem(type, item) {
       if (!supabaseClient) return;
       try {
         await supabaseClient.from('love_data').upsert({
-          id: item.id,
+          id: item.id || (type === 'config' ? item.config_id : 'item_' + Date.now()),
           data_type: type,
           content: item
         });
@@ -784,6 +836,7 @@
     window.onload = function() {
       mergeDefaultBucketList();
       initSupabase();
+      
       const isLoggedIn = sessionStorage.getItem('kitty_logged_in');
       if (isLoggedIn === 'true') {
         showDashboard();
@@ -792,6 +845,13 @@
       document.getElementById('cfg-supabase-url').value = supabaseUrl;
       document.getElementById('cfg-supabase-key').value = supabaseKey;
       startCounter();
+
+      // 每 10 秒增加轮询保障机制，双重确保多端同步不掉线
+      setInterval(() => {
+        if (supabaseClient) {
+          fetchCloudData(true);
+        }
+      }, 10000);
     };
 
     function handleLogin(e) {
@@ -887,7 +947,8 @@
       if (!val) return;
       startDate = val;
       localStorage.setItem('kitty_love_start_date', val);
-      showToast('纪念日设置已更新', 'success');
+      pushCloudItem('config', { config_id: 'start_date', date: val });
+      showToast('纪念日设置已同步更新', 'success');
     }
 
     function renderPhotos() {
@@ -967,7 +1028,7 @@
       renderPhotos();
       renderDashWidgets();
       closePhotoModal();
-      showToast('照片保存并已云端同步 📷', 'success');
+      showToast('照片保存并已同步云端 📷', 'success');
       triggerLoveHearts();
     }
 
@@ -1022,7 +1083,7 @@
       renderNotes();
       renderDashWidgets();
       closeNoteModal();
-      showToast('甜蜜日记存入成功并同步 📝', 'success');
+      showToast('甜蜜日记存入成功并已同步 📝', 'success');
     }
 
     function deleteNote(id) {
@@ -1162,7 +1223,7 @@
 
       initSupabase();
       closeConfigModal();
-      showToast('Supabase 配置已保存，云端数据同步中...', 'success');
+      showToast('Supabase 配置已保存，实时云端数据同步中...', 'success');
     }
 
     function openConfigModal() { toggleModal('config-modal', true); }
@@ -1250,7 +1311,7 @@
       
       window.addEventListener('mousemove', function(e) {
         const now = Date.now();
-        if (now - lastTime < 45) return; // 控制产生频率，避免卡顿
+        if (now - lastTime < 45) return;
         lastTime = now;
 
         const heart = document.createElement('div');
