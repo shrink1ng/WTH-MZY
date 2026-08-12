@@ -770,6 +770,7 @@
           }
           if (cloudBuckets.length > 0) {
             bucketList = cloudBuckets;
+            localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
           }
 
           // 纪念日起点云端同步
@@ -788,7 +789,7 @@
           renderBucketList();
           renderDashWidgets();
 
-          if (isSilent) {
+          if (!isSilent) {
             showToast('已自动同步云端最新记录 💕', 'info');
           }
         } else {
@@ -810,17 +811,31 @@
       showToast('正在从云端刷新最新数据...', 'info');
     }
 
-    // 推送单个数据到云端
+    // 推送单个数据到云端，返回 { success, error } 供调用方判断
     async function pushCloudItem(type, item) {
-      if (!supabaseClient) return;
+      if (!supabaseClient) return { success: false, error: 'Supabase 未配置' };
       try {
-        await supabaseClient.from('love_data').upsert({
+        // 检测图片 base64 大小：超过 800KB 给出警告，超过 1.5MB 拒绝
+        if (type === 'photo' && item.url && item.url.startsWith('data:')) {
+          const sizeKB = Math.round((item.url.length * 0.75) / 1024);
+          if (sizeKB > 1500) {
+            console.error('Image too large for cloud sync:', sizeKB, 'KB');
+            return { success: false, error: `图片过大 (${sizeKB} KB)，请使用更小的图片或粘贴网络链接` };
+          }
+          if (sizeKB > 800) {
+            console.warn('Large image may cause slow sync:', sizeKB, 'KB');
+          }
+        }
+        const { error } = await supabaseClient.from('love_data').upsert({
           id: item.id || (type === 'config' ? item.config_id : 'item_' + Date.now()),
           data_type: type,
           content: item
         });
+        if (error) throw error;
+        return { success: true };
       } catch (e) {
         console.error("Cloud push failed:", e);
+        return { success: false, error: e.message || '云端推送失败，请检查网络' };
       }
     }
 
@@ -944,12 +959,16 @@
       setInterval(updateTimer, 1000);
     }
 
-    function updateStartDate(val) {
+    async function updateStartDate(val) {
       if (!val) return;
       startDate = val;
       localStorage.setItem('kitty_love_start_date', val);
-      pushCloudItem('config', { config_id: 'start_date', date: val });
-      showToast('纪念日设置已同步更新', 'success');
+      const result = await pushCloudItem('config', { config_id: 'start_date', date: val });
+      if (result.success) {
+        showToast('纪念日设置已同步更新', 'success');
+      } else {
+        showToast('本地已保存，云端同步失败: ' + result.error, 'error');
+      }
     }
 
     function renderPhotos() {
@@ -990,49 +1009,6 @@
       modal.classList.remove('flex');
     }
 
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          tempImageBase64 = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function handleSavePhoto(e) {
-      e.preventDefault();
-      const urlInput = document.getElementById('photo-url-input').value.trim();
-      const title = document.getElementById('photo-title-input').value.trim();
-      const date = document.getElementById('photo-date-input').value;
-
-      const photoUrl = tempImageBase64 || urlInput;
-
-      if (!photoUrl) {
-        showToast('请先选择图片文件或输入图片网络链接！', 'error');
-        return;
-      }
-
-      const newPhoto = {
-        id: 'photo_' + Date.now(),
-        title: title,
-        date: date,
-        url: photoUrl,
-        rotate: Math.floor(Math.random() * 8) - 4
-      };
-
-      photos.unshift(newPhoto);
-      localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
-      pushCloudItem('photo', newPhoto);
-
-      renderPhotos();
-      renderDashWidgets();
-      closePhotoModal();
-      showToast('照片保存并已同步云端 📷', 'success');
-      triggerLoveHearts();
-    }
-
     function deletePhoto(id) {
       photos = photos.filter(p => p.id !== id);
       localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
@@ -1065,7 +1041,7 @@
       `).join('');
     }
 
-    function handleSaveNote(e) {
+    async function handleSaveNote(e) {
       e.preventDefault();
       const title = document.getElementById('note-title-input').value.trim();
       const content = document.getElementById('note-content-input').value.trim();
@@ -1079,12 +1055,16 @@
 
       notes.unshift(newNote);
       localStorage.setItem('kitty_love_notes', JSON.stringify(notes));
-      pushCloudItem('note', newNote);
+      const result = await pushCloudItem('note', newNote);
 
       renderNotes();
       renderDashWidgets();
       closeNoteModal();
-      showToast('甜蜜日记存入成功并已同步 📝', 'success');
+      if (result.success) {
+        showToast('甜蜜日记存入成功并已同步 📝', 'success');
+      } else {
+        showToast('本地已保存，云端同步失败: ' + result.error, 'error');
+      }
     }
 
     function deleteNote(id) {
@@ -1131,16 +1111,19 @@
       `).join('');
     }
 
-    function toggleBucketDone(id) {
+    async function toggleBucketDone(id) {
       const idx = bucketList.findIndex(b => b.id === id);
       if (idx !== -1) {
         bucketList[idx].done = !bucketList[idx].done;
         localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-        pushCloudItem('bucket', bucketList[idx]);
+        const result = await pushCloudItem('bucket', bucketList[idx]);
         renderBucketList();
         if (bucketList[idx].done) {
           triggerLoveHearts();
-          showToast('已打卡完成一项小事！🎉', 'success');
+          showToast(result.success ? '已打卡完成一项小事！🎉' : '本地已保存，云端同步失败', result.success ? 'success' : 'error');
+        }
+        if (!result.success && !bucketList[idx].done) {
+          showToast('本地已保存，云端同步失败: ' + result.error, 'error');
         }
       }
     }
@@ -1158,7 +1141,7 @@
       renderBucketList();
     }
 
-    function handleSaveBucket(e) {
+    async function handleSaveBucket(e) {
       e.preventDefault();
       const title = document.getElementById('bucket-title-input').value.trim();
       if (!title) return;
@@ -1171,11 +1154,15 @@
 
       bucketList.unshift(newItem);
       localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-      pushCloudItem('bucket', newItem);
+      const result = await pushCloudItem('bucket', newItem);
 
       renderBucketList();
       closeBucketModal();
-      showToast('新愿望已同步加入清单 ✨', 'success');
+      if (result.success) {
+        showToast('新愿望已同步加入清单 ✨', 'success');
+      } else {
+        showToast('本地已保存，云端同步失败: ' + result.error, 'error');
+      }
     }
 
     function deleteBucket(id) {
@@ -1308,7 +1295,7 @@
       reader.readAsDataURL(file);
     }
 
-    function handleSavePhoto(e) {
+    async function handleSavePhoto(e) {
       e.preventDefault();
       const urlInput = document.getElementById('photo-url-input').value.trim();
       const title = document.getElementById('photo-title-input').value.trim();
@@ -1338,15 +1325,18 @@
         console.warn('LocalStorage full, falling back to cloud sync only');
       }
 
-      pushCloudItem('photo', newPhoto);
+      const result = await pushCloudItem('photo', newPhoto);
 
       renderPhotos();
       renderDashWidgets();
       closePhotoModal();
-      showToast('照片保存并已同步云端 📷', 'success');
+      if (result.success) {
+        showToast('照片保存并已同步云端 📷', 'success');
+      } else {
+        showToast('本地已保存，但云端同步失败: ' + result.error, 'error');
+      }
       triggerLoveHearts();
     }
-    function closePhotoModal() { toggleModal('photo-modal', false); }
 
     function openNoteModal() {
       document.getElementById('note-title-input').value = "";

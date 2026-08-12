@@ -1,0 +1,2 @@
+[permissions]
+allow = ["Bash=Select-String -Path \"D:\\HTML\\index.html\" -Pattern \"supabase\" -CaseSensitive:$false", "Bash=Select-String -Path \"D:\\HTML\\index.html\" -Pattern \"photo|Photo|image|Image|图片|照片\" | Select-Object -First 30"]
