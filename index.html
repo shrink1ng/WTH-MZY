@@ -1873,7 +1873,7 @@ const LOVE_QUOTES = [
       { id: 'b100', title: '100. 一起白头偕老👵👴', done: false }
     ];
 
-    let startDate = localStorage.getItem('kitty_love_start_date') || DEFAULT_START_DATE;
+    let startDate = "2026-06-19"; // 固定纪念日，不需要云同步
     let photos = JSON.parse(localStorage.getItem('kitty_love_photos')) || defaultPhotos;
     let notes = JSON.parse(localStorage.getItem('kitty_love_notes')) || defaultNotes;
     let bucketList = JSON.parse(localStorage.getItem('kitty_love_bucket')) || defaultBucketList;
@@ -1978,8 +1978,6 @@ const LOVE_QUOTES = [
           const cloudPhotos = data.filter(d => d.data_type === 'photo').map(d => d.content);
           const cloudNotes = data.filter(d => d.data_type === 'note').map(d => d.content);
           const cloudBuckets = data.filter(d => d.data_type === 'bucket').map(d => d.content);
-          const cloudConfigs = data.filter(d => d.data_type === 'config');
-
           if (cloudPhotos.length > 0) {
             // 按上传时间倒序排列（新数据用 uploadedAt，老数据 fallback 到 date）
             cloudPhotos.sort((a, b) => (b.uploadedAt || 0) - (a.uploadedAt || 0) || (b.date || '').localeCompare(a.date || ''));
@@ -1995,15 +1993,6 @@ const LOVE_QUOTES = [
           if (cloudBuckets.length > 0) {
             bucketList = cloudBuckets;
             localStorage.setItem('kitty_love_bucket', JSON.stringify(bucketList));
-          }
-
-          // 纪念日起点云端同步
-          const dateCfg = cloudConfigs.find(c => c.id === 'start_date');
-          if (dateCfg && dateCfg.content && dateCfg.content.date) {
-            startDate = dateCfg.content.date;
-            localStorage.setItem('kitty_love_start_date', startDate);
-            const datePicker = document.getElementById('start-date-picker');
-            if (datePicker) datePicker.value = startDate;
           }
 
           mergeDefaultBucketList();
@@ -2196,16 +2185,10 @@ const LOVE_QUOTES = [
       setInterval(updateTimer, 1000);
     }
 
-    async function updateStartDate(val) {
+    function updateStartDate(val) {
       if (!val) return;
       startDate = val;
-      localStorage.setItem('kitty_love_start_date', val);
-      const result = await pushCloudItem('config', { config_id: 'start_date', date: val });
-      if (result.success) {
-        showToast('纪念日设置已同步更新', 'success');
-      } else {
-        showToast('本地已保存，云端同步失败: ' + result.error, 'error');
-      }
+      showToast('纪念日已更新', 'success');
     }
 
     function renderPhotos() {
