@@ -2065,6 +2065,10 @@ const LOVE_QUOTES = [
     }
 
     window.onload = async function() {
+      // 计数器立即启动，不依赖云端
+      document.getElementById('start-date-picker').value = startDate;
+      startCounter();
+
       mergeDefaultBucketList();
       await initSupabase();
       
@@ -2074,10 +2078,8 @@ const LOVE_QUOTES = [
         document.getElementById('login-modal').classList.add('hidden');
         showDashboard();
       }
-      document.getElementById('start-date-picker').value = startDate;
       document.getElementById('cfg-supabase-url').value = supabaseUrl;
       document.getElementById('cfg-supabase-key').value = supabaseKey;
-      startCounter();
 
       // 每 10 秒增加轮询保障机制，双重确保多端同步不掉线
       setInterval(() => {
