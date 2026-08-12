@@ -599,6 +599,7 @@
           </div>
 
           <div id="photo-wall" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-pink-200/30 border-2 border-dashed border-kitty-300/60 min-h-[300px]"></div>
+          <div id="photo-pagination" class="flex justify-center items-center gap-2 mt-4"></div>
         </div>
 
         <!-- 甜蜜生活小记模块 -->
@@ -1736,6 +1737,7 @@ const LOVE_QUOTES = [
     function randomQuote() { return LOVE_QUOTES[Math.floor(Math.random() * LOVE_QUOTES.length)]; }
     let tempImageBase64 = "";
     let currentBucketFilter = "all";
+    let currentPhotoPage = 1;
     let realtimeChannel = null;
 
     // Supabase 云数据库凭证
@@ -2199,12 +2201,23 @@ const LOVE_QUOTES = [
 
     function renderPhotos() {
       const container = document.getElementById('photo-wall');
+      const pagination = document.getElementById('photo-pagination');
+      const perPage = 9;
+      const totalPages = Math.ceil(photos.length / perPage);
+      
+      if (currentPhotoPage > totalPages) currentPhotoPage = totalPages;
+      if (currentPhotoPage < 1) currentPhotoPage = 1;
+
       if (photos.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-12 text-kitty-400 text-xs font-semibold">还没有照片，快点击右上角“钉上新照片”吧！</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-kitty-400 text-xs font-semibold">还没有照片，快点击右上角\u201c钉上新照片\u201d吧！</div>`;
+        pagination.innerHTML = '';
         return;
       }
 
-      container.innerHTML = photos.map(item => `
+      const start = (currentPhotoPage - 1) * perPage;
+      const pagePhotos = photos.slice(start, start + perPage);
+
+      container.innerHTML = pagePhotos.map(item => `
         <div class="polaroid-card group cursor-pointer" style="transform: rotate(${item.rotate || 0}deg)" onclick="openLightbox('${escapeHtml(item.url)}', '${escapeHtml(item.title)}')">
           <div class="tape-pin"></div>
           <div class="overflow-hidden rounded-lg bg-pink-50 mb-3 aspect-square flex items-center justify-center">
@@ -2212,13 +2225,37 @@ const LOVE_QUOTES = [
           </div>
           <h3 class="font-bold text-kitty-700 text-xs mb-1 truncate">${escapeHtml(item.title)}</h3>
           <div class="flex justify-between items-center text-[10px] text-kitty-400">
-            <span>📅 ${item.date}</span>
+            <span>\u{1f4c5} ${item.date}</span>
             <button onclick="event.stopPropagation(); deletePhoto('${item.id}')" class="text-kitty-300 hover:text-red-500 p-1">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
         </div>
       `).join('');
+
+      if (totalPages > 1) {
+        let html = '';
+        html += `<button onclick="goPhotoPage(${currentPhotoPage - 1})" ${currentPhotoPage === 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-xs font-bold ${currentPhotoPage === 1 ? 'bg-kitty-100 text-kitty-300 cursor-not-allowed' : 'bg-white text-kitty-500 hover:bg-kitty-100 border border-kitty-200'} transition"><i class="fa-solid fa-chevron-left"></i></button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === currentPhotoPage) {
+            html += `<span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-kitty-500 text-white">${i}</span>`;
+          } else {
+            html += `<button onclick="goPhotoPage(${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-kitty-400 hover:bg-kitty-100 border border-kitty-200 transition">${i}</button>`;
+          }
+        }
+        html += `<button onclick="goPhotoPage(${currentPhotoPage + 1})" ${currentPhotoPage === totalPages ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-xs font-bold ${currentPhotoPage === totalPages ? 'bg-kitty-100 text-kitty-300 cursor-not-allowed' : 'bg-white text-kitty-500 hover:bg-kitty-100 border border-kitty-200'} transition"><i class="fa-solid fa-chevron-right"></i></button>`;
+        pagination.innerHTML = html;
+      } else {
+        pagination.innerHTML = '';
+      }
+    }
+
+    function goPhotoPage(page) {
+      const totalPages = Math.ceil(photos.length / 9);
+      if (page < 1 || page > totalPages) return;
+      currentPhotoPage = page;
+      renderPhotos();
+      document.getElementById('photo-wall').scrollIntoView({ behavior: 'smooth' });
     }
 
     function openLightbox(url, title) {
@@ -2554,6 +2591,7 @@ const LOVE_QUOTES = [
 
       const result = await pushCloudItem('photo', newPhoto);
 
+      currentPhotoPage = 1;
       renderPhotos();
       renderDashWidgets();
       closePhotoModal();
