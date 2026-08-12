@@ -680,12 +680,12 @@
       }
     }
 
-    function initSupabase() {
+    async function initSupabase() {
       if (supabaseUrl && supabaseKey && window.supabase) {
         try {
           supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
           updateSyncBadge(true);
-          fetchCloudData();
+          await fetchCloudData();
           setupRealtimeSubscription();
         } catch (e) {
           console.error('Supabase init failed', e);
@@ -841,9 +841,9 @@
       }
     }
 
-    window.onload = function() {
+    window.onload = async function() {
       mergeDefaultBucketList();
-      initSupabase();
+      await initSupabase();
       
       const isLoggedIn = sessionStorage.getItem('kitty_logged_in');
       if (isLoggedIn === 'true') {
