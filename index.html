@@ -888,15 +888,8 @@
       
       const isLoggedIn = sessionStorage.getItem('kitty_logged_in');
       if (isLoggedIn === 'true') {
-        // 自动登录：隐藏登录界面，显示加载动画
+        // 自动登录：initSupabase 已完成云端同步，直接进入
         document.getElementById('login-modal').classList.add('hidden');
-        const loading = document.getElementById('loading-overlay');
-        loading.classList.remove('hidden');
-        loading.classList.add('flex');
-        // 短暂展示让用户看到小猫眨眼
-        await new Promise(r => setTimeout(r, 1200));
-        loading.classList.add('hidden');
-        loading.classList.remove('flex');
         showDashboard();
       }
       document.getElementById('start-date-picker').value = startDate;
@@ -929,8 +922,6 @@
         if (supabaseClient) {
           await fetchCloudData(true);
         }
-        // 最少展示 1.8 秒让动画完整播放
-        await new Promise(r => setTimeout(r, 1800));
 
         // 隐藏加载，进入主界面
         loading.classList.add('hidden');
