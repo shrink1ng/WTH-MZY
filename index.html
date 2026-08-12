@@ -761,10 +761,14 @@
           const cloudConfigs = data.filter(d => d.data_type === 'config');
 
           if (cloudPhotos.length > 0) {
+            // 按日期倒序排列，确保最新照片在前（dash-recent-photo 取 [0]）
+            cloudPhotos.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
             photos = cloudPhotos;
             localStorage.setItem('kitty_love_photos', JSON.stringify(photos));
           }
           if (cloudNotes.length > 0) {
+            // 按时间倒序排列
+            cloudNotes.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
             notes = cloudNotes;
             localStorage.setItem('kitty_love_notes', JSON.stringify(notes));
           }
