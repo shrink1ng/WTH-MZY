@@ -107,21 +107,192 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
     }
 
-    /* 小猫眨眼动画 */
-    @keyframes catBlink {
-      0%, 40%, 55%, 100% { transform: scaleY(1); }
-      47% { transform: scaleY(0.06); }
+    /* CSS 小猫桌面宠物 */
+    @keyframes catEyeBlink {
+      0%, 42%, 56%, 100% { transform: scaleY(1); }
+      49% { transform: scaleY(0.06); }
+    }
+    @keyframes catEarL {
+      0%, 100% { transform: rotate(-12deg); }
+      30% { transform: rotate(-22deg); }
+      60% { transform: rotate(-12deg); }
+    }
+    @keyframes catEarR {
+      0%, 100% { transform: rotate(12deg); }
+      35% { transform: rotate(22deg); }
+      65% { transform: rotate(12deg); }
+    }
+    @keyframes catTail {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
     }
     @keyframes catFloat {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+      50% { transform: translateY(-6px); }
     }
-    .loading-cat {
-      display: inline-block;
-      animation: catBlink 2.2s ease-in-out infinite;
+    @keyframes catPupil {
+      0%, 45%, 55%, 100% { transform: translate(0, 0); }
+      48% { transform: translate(2px, 2px); }
+      52% { transform: translate(-2px, -1px); }
     }
-    .loading-cat-wrap {
-      animation: catFloat 3s ease-in-out infinite;
+    .css-cat-wrap {
+      animation: catFloat 3.5s ease-in-out infinite;
+      position: relative;
+    }
+    .css-cat {
+      position: relative;
+      width: 110px;
+      height: 100px;
+      margin: 0 auto;
+    }
+    /* 猫脸 */
+    .cat-face {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 76px;
+      background: linear-gradient(180deg, #FFF0E0 0%, #FFE0C8 100%);
+      border-radius: 50% 50% 42% 42%;
+      box-shadow: 0 8px 24px rgba(251, 113, 153, 0.18), inset 0 -6px 10px rgba(0,0,0,0.04);
+    }
+    /* 耳朵 */
+    .cat-ear {
+      position: absolute;
+      top: 2px;
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-bottom: 32px solid #FFE0C8;
+      filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.06));
+    }
+    .cat-ear-l { left: 10px; animation: catEarL 4s ease-in-out infinite; }
+    .cat-ear-r { right: 10px; animation: catEarR 4.5s ease-in-out infinite; }
+    .cat-ear::after {
+      content: '';
+      position: absolute;
+      top: 9px;
+      left: -10px;
+      width: 0;
+      height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 18px solid #FFB6C1;
+    }
+    /* 眼睛 */
+    .cat-eye {
+      position: absolute;
+      top: 24px;
+      width: 24px;
+      height: 26px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+      animation: catEyeBlink 3.2s ease-in-out infinite;
+    }
+    .eye-l { left: 16px; }
+    .eye-r { right: 16px; }
+    /* 瞳孔 */
+    .pupil {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 11px;
+      height: 14px;
+      background: radial-gradient(circle at 40% 40%, #4a3028, #1a100c);
+      border-radius: 50%;
+      animation: catPupil 3.2s ease-in-out infinite;
+    }
+    .pupil::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 3px;
+      height: 3px;
+      background: white;
+      border-radius: 50%;
+    }
+    /* 鼻子 */
+    .cat-nose {
+      position: absolute;
+      top: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 7px solid #F09098;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+    }
+    /* 嘴巴 */
+    .cat-mouth {
+      position: absolute;
+      top: 51px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .cat-mouth::before, .cat-mouth::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 12px;
+      height: 6px;
+      border-bottom: 2px solid #D4A0A0;
+      border-radius: 0 0 50% 50%;
+    }
+    .cat-mouth::before { left: -12px; }
+    .cat-mouth::after { left: 0; }
+    /* 腮红 */
+    .cat-blush {
+      position: absolute;
+      top: 38px;
+      width: 16px;
+      height: 9px;
+      background: rgba(255, 160, 150, 0.45);
+      border-radius: 50%;
+      filter: blur(1px);
+    }
+    .blush-l { left: 5px; }
+    .blush-r { right: 5px; }
+    /* 尾巴 */
+    .cat-tail {
+      position: absolute;
+      bottom: -8px;
+      right: -16px;
+      width: 28px;
+      height: 12px;
+      background: #FFE0C8;
+      border-radius: 0 50% 50% 0;
+      transform-origin: left center;
+      animation: catTail 2.5s ease-in-out infinite;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+    .cat-tail::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: -2px;
+      width: 14px;
+      height: 14px;
+      background: #FFF0E0;
+      border-radius: 50%;
+    }
+    /* 浮动小爱心 */
+    @keyframes loadHeart {
+      0% { transform: translateY(0) scale(1); opacity: 0.9; }
+      100% { transform: translateY(-90px) scale(0.3); opacity: 0; }
+    }
+    .load-heart {
+      position: absolute;
+      pointer-events: none;
+      animation: loadHeart 2.5s ease-out infinite;
+      font-size: 16px;
     }
 
     @keyframes floatUp {
@@ -260,8 +431,23 @@
 
   <!-- 同步加载等待界面 -->
   <div id="loading-overlay" class="fixed inset-0 bg-kitty-100/95 backdrop-blur-xl hidden items-center justify-center z-[60] p-4 flex-col">
-    <div class="loading-cat-wrap text-8xl mb-8 select-none">
-      <span class="loading-cat inline-block">🐱</span>
+    <div class="css-cat-wrap mb-6">
+      <div class="css-cat">
+        <div class="cat-ear cat-ear-l"></div>
+        <div class="cat-ear cat-ear-r"></div>
+        <div class="cat-face">
+          <div class="cat-eye eye-l"><span class="pupil"></span></div>
+          <div class="cat-eye eye-r"><span class="pupil"></span></div>
+          <div class="cat-nose"></div>
+          <div class="cat-mouth"></div>
+          <div class="cat-blush blush-l"></div>
+          <div class="cat-blush blush-r"></div>
+        </div>
+        <div class="cat-tail"></div>
+      </div>
+      <span class="load-heart" style="top:30px;left:-20px;animation-delay:0s">💕</span>
+      <span class="load-heart" style="top:50px;right:-16px;animation-delay:0.8s">✨</span>
+      <span class="load-heart" style="top:10px;left:50%;animation-delay:1.6s">🌸</span>
     </div>
     <p class="text-kitty-600 font-bold text-lg tracking-wider">正在酝酿爱的美酒请等待</p>
     <div class="mt-5 flex gap-1.5">
