@@ -83,17 +83,28 @@
 
     .tape-pin {
       position: absolute;
-      top: -10px;
+      top: -14px;
       left: 50%;
       transform: translateX(-50%);
-      width: 70px;
-      height: 22px;
-      background: rgba(255, 228, 237, 0.85);
-      backdrop-filter: blur(4px);
-      border: 1px dashed #fb7199;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      width: 28px;
+      height: 28px;
+      background: radial-gradient(circle at 35% 28%, #fca5a5, #ef4444 55%, #b91c1c 100%);
+      border-radius: 50%;
+      box-shadow: 0 3px 7px rgba(0,0,0,0.35), inset 0 1.5px 3px rgba(255,255,255,0.45);
       z-index: 10;
+    }
+    .tape-pin::after {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 9px solid #991b1b;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
     }
 
     @keyframes floatUp {
